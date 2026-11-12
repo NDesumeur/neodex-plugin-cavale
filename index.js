@@ -1058,21 +1058,39 @@ function cvUp(kind, now) {  // lâcher : un ruban en cours s'arrête là (sauf d
   now ??= rhNow();
   for (const n of rh.notes) if (n.holding && n.kind === kind) { cvSettle(n, now); n.holding = false; n.done = true; if (now < n.end - .1) n.broke = true; else cvFx(n, [0, 'FINI', 0, '#ffd84a'], true); }
 }
-/* le dessin : ciel du soir, montagnes, collines qui défilent, chemin ; la coureuse à gauche, les cibles sur les deux voies */
-const CV_HERO = (legs) => spr(['......kkkkk.....', '....kkhhhhhk....', '...khhhhhhhhk...', 'kk.khhhhhssssk..', 'khkkhhhhsssssk..', 'khhkhhhssswesk..', '.kk.khhssssssssk', '....khsssssssk..', '.....kkssssskk..', '...krrrrrrrrk...', 'rrrrkrrrrrrrk...', '..rkbbbbbbbbbks.', '...kbbbbbbbbbks.', '...kyyyyyyyyyk..', '...kbbbbbbbbbk..', '....kbbbkbbbk...', ...legs],
-  {k: '#1a0e0a', h: '#c8502a', s: '#f0c8a0', w: '#ffffff', e: '#1a0e0a', r: '#e83a4a', b: '#3a6ac8', y: '#e8b84a', p: '#5a3a28'});
-const CV_RUN = [CV_HERO(['...kssk..kssk...', '..kssk....kssk..', '.kppk......kppk.', '.kkk........kkk.']), CV_HERO(['.....kssssk.....', '.....ksskssk....', '.....kppkppk....', '.....kkk.kkk....'])];
-const CV_JUMP = CV_HERO(['....kssk.kssk...', '...kppk...kppk..', '...kkk.....kkk..', '................']);
-const CV_SLIME = spr(['......kkkk......', '....kkGGggkk....', '...kGGggggggk...', '..kGggggggggdk..', '.kgwwkgggggggdk.', '.kgwkkgggggggdk.', 'kgggggggggggggdk', 'kgkmmmkgggggggdk', 'kggkkkggggggggdk', 'kgggggggggggdddk', '.kddddddddddddk.', '..kkkkkkkkkkkk..'],
-  {k: '#0e1a0a', g: '#5ac84a', G: '#b8f0a0', d: '#2a8a2a', w: '#ffffff', m: '#c83a3a'});
-const CV_BAT = [spr(['k................k', 'kk..............kk', 'kpk.....kk.....kpk', 'kppk..kkppkk..kppk', 'kpppkkppppppkkpppk', '.kpppkwekpppkpppk.', '..kppkppppppkppk..', '...kkkppppppkkk...', '......kppppk......', '.......kkkk.......'], {k: '#140a1a', p: '#8a4ac8', w: '#ffe84a', e: '#140a1a'}),
-  spr(['..................', '........kk........', '......kkppkk......', '.....kppppppk.....', '...kkkwekpppkkk...', '.kkppkppppppkppkk.', 'kpppkkppppppkkpppk', 'kppk..kppppk..kppk', 'kpk....kppk....kpk', 'kk......kk......kk'], {k: '#140a1a', p: '#8a4ac8', w: '#ffe84a', e: '#140a1a'})];
-const CV_BG = cnv(W, H, b => {  // le ciel du soir tramé, les étoiles, la lune, les montagnes au loin (dessinés une fois)
+/* le dessin : ciel du soir, nuages, montagnes, collines qui défilent, chemin ; la coureuse à gauche, les cibles sur les deux voies */
+const CV_PAL = {k: '#1a0e0a', h: '#c8502a', H: '#f08a4a', s: '#f0c8a0', S: '#c8906a', w: '#ffffff', e: '#1a0e0a', r: '#e83a4a', R: '#a82a3a', b: '#3a6ac8', B: '#2a4a98', y: '#e8b84a', p: '#5a3a28'};
+const CV_TOP = ['.......kkkkk........', '.....kkhhhhhkk......', '....khhHHHhhhhk.....', '...khhHHhhhhhhhk....', '...khhhhhhhhhsssk...', '..khhhhhhhhsssssk...', '..khhhhhhhsssswesk..', '..khhhkhhhsssswesk..', '...khhhhhsssssSSk...', '....khhhkkksssk.....',
+  '...krrrrrrrrrrrk....', '...kRRrrrrrrrrRk....', '....kbbbbbbbbbkss...', '...kbbbbbbbbbbbkss..', '...kBbbbbbbbbbbkk...', '...kyyyyyyyyyyyk....', '...kBbbbbbbbbbBk....', '....kBBbbbbbBBk.....'];
+const CV_HERO = legs => spr([...CV_TOP, ...legs], CV_PAL);
+const CV_RUN = [  // quatre images de course : grande foulée, passage, l'autre foulée, genou levé
+  CV_HERO(['...kssk....kssk.....', '..kssk......kssk....', '.kppk........kppk...', '.kppk.........kppk..', '.kkkk..........kkkk.']),
+  CV_HERO(['......ksssk.........', '......kssssk........', '.......kppk.........', '......kpppk.........', '......kkkkkk........']),
+  CV_HERO(['....kssk..kssk......', '...kssk....kssk.....', '..kppk......kppk....', '..kppk.......kppk...', '.kkkk.........kkkk..']),
+  CV_HERO(['......kssskssk......', '......kssk.ksk......', '......kppk.kppk.....', '.....kppk..kkkk.....', '.....kkkk...........'])];
+const CV_JUMP = CV_HERO(['.....kssk.kssk......', '....kppk...kppk.....', '....kkkk....kppk....', '.............kkk....', '....................']);
+const cvVar = (rows, pals) => pals.map(p => spr(rows, p));
+const CV_SLIME_ROWS = ['......kkkk......', '....kkGGggkk....', '...kGGggggggk...', '..kGggggggggdk..', '.kgwwkgggggggdk.', '.kgwkkgggggggdk.', 'kgggggggggggggdk', 'kgkmmmkgggggggdk', 'kggkkkggggggggdk', 'kgggggggggggdddk', '.kddddddddddddk.', '..kkkkkkkkkkkk..'];
+const CV_SLIME = cvVar(CV_SLIME_ROWS, [  // trois couleurs de gelée : verte, bleue, rose
+  {k: '#0e1a0a', g: '#5ac84a', G: '#b8f0a0', d: '#2a8a2a', w: '#ffffff', m: '#c83a3a'},
+  {k: '#0a101a', g: '#4a9ae8', G: '#b0d8ff', d: '#2a5aa8', w: '#ffffff', m: '#1a2a5a'},
+  {k: '#1a0a12', g: '#e86aa8', G: '#ffc0dc', d: '#a83a6a', w: '#ffffff', m: '#5a1a2a'}]);
+const CV_BAT_ROWS = [['k................k', 'kk..............kk', 'kpk.....kk.....kpk', 'kppk..kkppkk..kppk', 'kpppkkppppppkkpppk', '.kpppkwekpppkpppk.', '..kppkppppppkppk..', '...kkkppppppkkk...', '......kppppk......', '.......kkkk.......'],
+  ['..................', '........kk........', '......kkppkk......', '.....kppppppk.....', '...kkkwekpppkkk...', '.kkppkppppppkppkk.', 'kpppkkppppppkkpppk', 'kppk..kppppk..kppk', 'kpk....kppk....kpk', 'kk......kk......kk']];
+const CV_BAT_PALS = [{k: '#140a1a', p: '#8a4ac8', w: '#ffe84a', e: '#140a1a'}, {k: '#1a0a0a', p: '#c84a3a', w: '#ffe84a', e: '#1a0a0a'}];
+const CV_BAT = CV_BAT_PALS.map(p => CV_BAT_ROWS.map(r => spr(r, p)));  // [couleur][battement]
+const CV_GHOST = spr(['.....kkkkkk.....', '...kkwwwwwwkk...', '..kwwwwwwwwwwk..', '.kwwwwwwwwwwwwk.', '.kwwkkwwwkkwwwk.', '.kwwkkwwwkkwwwk.', '.kwwwwwwwwwwwwk.', '.kwwwwwkkwwwwwk.', '.kwwwwwwwwwwwwk.', '.kwwwwwwwwwwwwk.', '.kwkwwkwwkwwkwk.', '.kk.kk.kk.kk.kk.'], {k: '#1a2038', w: '#d8e8ff'});
+const cvMob = (kind, i) => kind === 'air' ? (i % 5 === 4 ? CV_GHOST : CV_BAT[i % 2][Math.floor(rh.tick / 8 + i) % 2]) : CV_SLIME[i % 3];
+const CV_BG = cnv(W, H, b => {  // le ciel du soir tramé, la lune et son halo, les montagnes au loin avec leurs crêtes (dessinés une fois)
   const sky = ['#1a1238', '#2a1a48', '#46225a', '#6a2a5a', '#9a3a58', '#c85a4a', '#e8884a'];
   for (let y = 0; y < CV.FLOOR; y++) { const f = y / (CV.FLOOR - 40) * (sky.length - 1), i = Math.min(sky.length - 1, Math.floor(f)); px(b, (f - i > .5 && y % 2) ? sky[Math.min(sky.length - 1, i + 1)] : sky[i], 0, y, W, 1); }
-  const r = seeded(4); for (let i = 0; i < 40; i++) px(b, ['#6a5a98', '#d8d0f8'][Math.floor(r() * 2)], Math.floor(r() * W), Math.floor(r() * 70));
-  for (let y = -9; y <= 9; y++) for (let x = -9; x <= 9; x++) if (Math.hypot(x, y) < 9) px(b, Math.hypot(x + 3, y + 3) < 6 ? '#fff8d8' : '#f0e0a0', 250 + x, 40 + y);
-  for (let x = 0; x < W; x++) { const h = 40 + Math.round(Math.abs(Math.sin(x / 37)) * 22 + Math.sin(x / 13) * 4); px(b, '#3a1a3a', x, CV.FLOOR - h, 1, h); }
+  for (let y = -16; y <= 16; y++) for (let x = -16; x <= 16; x++) { const d = Math.hypot(x, y); if (d >= 9 && d < 16 && (x + y) % 2 === 0) px(b, d < 12 ? '#4a3a6a' : '#3a2a5a', 250 + x, 40 + y); }
+  for (let y = -9; y <= 9; y++) for (let x = -9; x <= 9; x++) { const d = Math.hypot(x, y); if (d < 9) px(b, Math.hypot(x - 3, y + 2) < 2.2 || Math.hypot(x + 3, y - 3) < 1.6 ? '#e0cc90' : Math.hypot(x + 3, y + 3) < 6 ? '#fff8d8' : '#f0e0a0', 250 + x, 40 + y); }
+  for (let x = 0; x < W; x++) { const h = 40 + Math.round(Math.abs(Math.sin(x / 37)) * 22 + Math.sin(x / 13) * 4); px(b, '#3a1a3a', x, CV.FLOOR - h, 1, h); px(b, '#5a2a4a', x, CV.FLOOR - h, 1, 1); if (Math.cos(x / 37) * Math.sin(x / 37) > .2) px(b, '#4a2240', x, CV.FLOOR - h + 1, 1, 3); }
+});
+const CV_STARS = (() => { const r = seeded(4); return Array.from({length: 46}, () => [Math.floor(r() * W), Math.floor(r() * 80), Math.floor(r() * 60)]); })();
+const CV_CLOUD = cnv(40, 12, b => {  // un nuage du soir, éclairé par-dessous
+  for (const [cx, cy, rr] of [[10, 7, 5], [19, 5, 6], [29, 7, 5], [16, 8, 4], [24, 8, 4]]) for (let y = -rr; y <= rr; y++) for (let x = -rr; x <= rr; x++) if (Math.hypot(x, y) <= rr) px(b, y > rr * .4 ? '#c86a6a' : y < -rr * .5 ? '#8a5a8a' : '#a85a78', cx + x, cy + y);
 });
 const CV_TREE = cnv(28, 44, b => {  // un arbre rond : tronc, feuillage en trois boules, lumière du couchant à droite
   px(b, '#140a10', 12, 22, 5, 22); px(b, '#3a1e1e', 13, 22, 3, 22); px(b, '#5a2e24', 15, 26, 1, 16);
@@ -1081,59 +1099,86 @@ const CV_TREE = cnv(28, 44, b => {  // un arbre rond : tronc, feuillage en trois
     px(b, d > r - 1 ? '#0e1a14' : (x - y > r * .8 && d > r * .5) ? '#4a6a3a' : (x + y + 64) % 4 === 0 && x > 0 ? '#2e4a30' : '#1e3a28', cx + x, cy + y);
   }
 });
+const CV_TUFT = [spr(['..k.....', '.kgk..k.', '.kgk.kgk', 'kgGgkgGk', 'kgggggGk'], {k: '#0e2a0e', g: '#3a8a2a', G: '#7ad85a'}),
+  spr(['..rr....', '.rwwr...', '..rr..k.', '...k.kgk', '..kgkgGk'], {k: '#0e2a0e', g: '#3a8a2a', G: '#7ad85a', r: '#e8506a', w: '#ffe8a0'}),
+  spr(['.yy.....', 'yooy....', '.yy..k..', '..k.kgk.', '.kgkgGgk'], {k: '#0e2a0e', g: '#3a8a2a', G: '#7ad85a', y: '#f8d84a', o: '#c8702a'})];
 function cvScene(now, beat) {
   const bpm = rh.info?.bpm || 120, pxs = CV.PPB * bpm / 60, run = rh.mode === 'play' ? Math.max(0, now) * pxs : rh.tick;
   g.drawImage(CV_BG, 0, 0);
-  for (let x = -40; x < W + 40; x++) { const wx = x + run * .3, h = 18 + Math.round(Math.sin(wx / 29) * 7 + Math.sin(wx / 11) * 2); px(g, '#5a2a3a', x, CV.FLOOR - h, 1, h); }  // les collines, plus lentes
+  for (const [x, y, ph] of CV_STARS) { const tw = (rh.tick + ph * 7) % 90; px(g, tw < 6 ? '#ffffff' : tw < 40 ? '#d8d0f8' : '#6a5a98', x, y); if (tw < 3) { px(g, '#ffffff', x - 1, y); px(g, '#ffffff', x + 1, y); px(g, '#ffffff', x, y - 1); px(g, '#ffffff', x, y + 1); } }
+  for (let k = Math.floor(run * .08 / 110) - 1; ; k++) { const x = Math.round(k * 110 - run * .08); if (x > W) break; g.drawImage(CV_CLOUD, x, 22 + ((k * 37) % 3 + 3) % 3 * 14); }  // les nuages, très lents
+  for (let x = -40; x < W + 40; x++) { const wx = x + run * .3, h = 18 + Math.round(Math.sin(wx / 29) * 7 + Math.sin(wx / 11) * 2); px(g, '#5a2a3a', x, CV.FLOOR - h, 1, h); px(g, '#7a3a48', x, CV.FLOOR - h, 1, 1); }  // les collines, plus lentes
   for (let k = Math.floor(run * .5 / 90) - 1; ; k++) { const x = Math.round(k * 90 - run * .5); if (x > W) break; g.drawImage(CV_TREE, x + 8, CV.FLOOR - 44); }  // les arbres
-  px(g, '#1a0e0a', 0, CV.FLOOR - 1, W, 1); px(g, '#4aa83a', 0, CV.FLOOR, W, 3); px(g, '#2a7a2a', 0, CV.FLOOR + 3, W, 1); px(g, '#6a4228', 0, CV.FLOOR + 4, W, H - CV.FLOOR - 4);  // le chemin, à la vitesse des monstres
-  for (let k = Math.floor(run / 24) - 1; ; k++) { const x = Math.round(k * 24 - run); if (x > W) break; px(g, '#4a2c1a', x, CV.FLOOR + 8 + (k % 3) * 9, 6, 2); px(g, '#8a5a38', x + 12, CV.FLOOR + 12 + (k % 2) * 11, 3, 1); }
+  px(g, '#1a0e0a', 0, CV.FLOOR - 1, W, 1); px(g, '#4aa83a', 0, CV.FLOOR, W, 3); px(g, '#7ad85a', 0, CV.FLOOR, W, 1); px(g, '#2a7a2a', 0, CV.FLOOR + 3, W, 1); px(g, '#6a4228', 0, CV.FLOOR + 4, W, H - CV.FLOOR - 4);  // le chemin, à la vitesse des monstres
+  for (let k = Math.floor(run / 24) - 1; ; k++) { const x = Math.round(k * 24 - run); if (x > W) break; px(g, '#4a2c1a', x, CV.FLOOR + 8 + (k % 3) * 9, 6, 2); px(g, '#8a5a38', x, CV.FLOOR + 7 + (k % 3) * 9, 6, 1); px(g, '#8a5a38', x + 12, CV.FLOOR + 12 + (k % 2) * 11, 3, 1); }
+  for (let k = Math.floor(run / 37) - 1; ; k++) { const x = Math.round(k * 37 - run); if (x > W) break; g.drawImage(CV_TUFT[((k % 3) + 3) % 3], x, CV.FLOOR - 4); }  // herbes et fleurs au bord du chemin
+  for (let i = 0; i < 7; i++) {  // les lucioles, qui clignotent au rythme
+    const fx = ((i * 53 - run * .4) % (W + 20) + W + 20) % (W + 20) - 10, fy = 120 + Math.sin(rh.tick / 30 + i * 2) * 18 + i * 6;
+    if ((beat + i * .37) % 1 < .6) { px(g, '#fff8a0', fx, fy, 1, 1); g.globalAlpha = .35; px(g, '#f8e84a', fx - 1, fy - 1, 3, 3); g.globalAlpha = 1; }
+  }
 }
 function cvHero(beat) {
-  const air = rh.tick - rh.jumpAt < 14 || rh.held.air > 0, ground = CV.FLOOR - 20;
-  const y = air ? CV.AY - 10 : ground - (rh.mode === 'play' && beat % 1 < .2 ? 1 : 0), x = CV.HX - 16;
+  const air = rh.tick - rh.jumpAt < 14 || rh.held.air > 0, ground = CV.FLOOR - 23;
+  const y = air ? CV.AY - 12 : ground - (rh.mode === 'play' && beat % 1 < .2 ? 1 : 0), x = CV.HX - 18;
   const hurt = rh.tick - rh.hurt < 16;
   if (hurt && rh.tick % 4 < 2) g.globalAlpha = .4;
-  g.drawImage(air ? CV_JUMP : CV_RUN[Math.floor(rh.tick / 6) % 2], x, y); g.globalAlpha = 1;
-  if (air) for (let k = 0; k < 3; k++) px(g, 'rgba(255,240,200,.35)', x - 4 - k * 5, y + 6 + k * 2, 3, 1);  // le saut, en l'air
-  const sw = rh.swing; if (sw && rh.tick - sw.at < 8) {  // le coup de bâton : un arc devant la coureuse, sur la voie frappée
-    const sy = cvY(sw.kind), p = (rh.tick - sw.at) / 8;
-    for (let a = -1.2; a <= 1.2; a += .12) px(g, '#fff0c8', CV.HX - 2 + Math.cos(a) * (10 + p * 4), sy + Math.sin(a) * (10 + p * 4), 2, 2);
+  for (let i = 0; i < 9; i++) px(g, i % 3 === 2 ? '#a82a3a' : '#e83a4a', x + 3 - i, y + 10 + Math.round(Math.sin(rh.tick / 4 - i * .7) * (1 + i / 4)), 1, 2);  // l'écharpe qui flotte derrière
+  g.drawImage(air ? CV_JUMP : CV_RUN[Math.floor(rh.tick / 5) % 4], x, y); g.globalAlpha = 1;
+  if (air) for (let k = 0; k < 3; k++) px(g, 'rgba(255,240,200,.35)', x - 4 - k * 5, y + 8 + k * 3, 4, 1);  // le saut, en l'air
+  else if (rh.mode === 'play' && rh.tick % 10 < 4) px(g, '#8a5a38', x + 2 - (rh.tick % 10), CV.FLOOR - 2, 2, 1);  // la poussière des pas
+  const sw = rh.swing; if (sw && rh.tick - sw.at < 9) {  // le coup d'épée : la lame tendue et un croissant de lumière sur la voie frappée
+    const sy = cvY(sw.kind), p = (rh.tick - sw.at) / 9, cx = CV.HX + 6;
+    if (p < .5) { px(g, '#1a0e0a', x + 16, y + 12, 11, 3); px(g, '#e8f0ff', x + 17, y + 13, 9, 1); px(g, '#e8b84a', x + 15, y + 12, 2, 3); }
+    g.globalAlpha = 1 - p;
+    for (let a = -1.3; a <= 1.3; a += .06) { const r1 = 12 + p * 6, th = Math.round((1.4 - Math.abs(a)) * 3); for (let t = 0; t < th; t++) px(g, t === 0 ? '#ffffff' : '#ffd88a', cx + Math.cos(a) * (r1 - t), sy + Math.sin(a) * (r1 - t), 1, 1); }
+    g.globalAlpha = 1;
   }
 }
-function cvLanes(now) {
-  const bpm = rh.info?.bpm || 120, pxs = CV.PPB * bpm / 60;
-  for (const kind of ['air', 'sol']) {  // les cibles : un cercle par voie, plein quand on tient la touche
-    const y = cvY(kind), on = rh.held?.[kind];
-    for (let a = 0; a < 40; a++) px(g, on ? '#ffd84a' : '#f8e8d0', CV.HX + 14 + Math.cos(a / 40 * Math.PI * 2) * 11, y + Math.sin(a / 40 * Math.PI * 2) * 11, 1, 1);
-    pxFont(g, kind === 'air' ? 'J K' : 'F D', CV.HX + 14, kind === 'air' ? y + 22 : y - 14, 'rgba(255,240,220,.5)', 6, 'center');
+function cvTarget(kind, beat) {  // la cible d'une voie : quatre coins qui battent la mesure, un losange au centre, dorée quand on tient la touche
+  const y = cvY(kind), cx = CV.HX + 14, on = rh.held?.[kind], pulse = rh.mode === 'play' ? Math.max(0, 1 - (beat % 1) * 4) : 0, r = 10 + Math.round(pulse * 2);
+  const col = on ? '#ffd84a' : '#f8e8d0', dark = '#1a0e0a';
+  if (on) { g.globalAlpha = .25; for (let d = -9; d <= 9; d++) px(g, '#ffd84a', cx - (9 - Math.abs(d)), y + d, (9 - Math.abs(d)) * 2 + 1, 1); g.globalAlpha = 1; }
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    px(g, dark, cx + sx * r - (sx > 0 ? 4 : 0), cy0(y, sy, r) - 1, 5, 3); px(g, dark, cx + sx * r - 1, cy0(y, sy, r) - (sy > 0 ? 4 : 0), 3, 5);
+    px(g, col, cx + sx * r - (sx > 0 ? 3 : 0), cy0(y, sy, r), 4, 1); px(g, col, cx + sx * r, cy0(y, sy, r) - (sy > 0 ? 3 : 0), 1, 4);
   }
+  for (let d = -3; d <= 3; d++) { const w = 3 - Math.abs(d); px(g, col, cx - w, y + d, 1, 1); px(g, col, cx + w, y + d, 1, 1); }
+  pxFont(g, kind === 'air' ? 'J K' : 'F D', cx, kind === 'air' ? y + 24 : y - 16, 'rgba(255,240,220,.5)', 6, 'center');
+}
+const cy0 = (y, sy, r) => y + sy * r;
+function cvLanes(now, beat) {
+  const bpm = rh.info?.bpm || 120, pxs = CV.PPB * bpm / 60;
+  for (const kind of ['air', 'sol']) cvTarget(kind, beat);
   for (const n of rh.notes) if (n.end && !(n.done && n.end < now - 1)) {  // les rubans dorés, avec des notes de musique
     const y = cvY(n.kind), x1 = Math.max(CV.HX + 14, CV.HX + 14 + (n.t - now) * pxs), x2 = CV.HX + 14 + (n.end - now) * pxs; if (x2 <= x1 || x1 > W + 10) continue;
     if (n.missed || n.broke) g.globalAlpha = .35;
     px(g, '#1a0e0a', x1, y - 4, x2 - x1, 9); px(g, '#ffd84a', x1, y - 3, x2 - x1, 7); px(g, '#fff0a0', x1, y - 3, x2 - x1, 2); px(g, '#c8902a', x1, y + 2, x2 - x1, 2);
+    if (n.holding) for (let x = x1; x < Math.min(x2, x1 + 40); x += 4) if ((x + rh.tick) % 8 < 4) px(g, '#ffffff', x, y - 3, 2, 1);
     for (let t = Math.ceil(n.t * 4) / 4; t < n.end; t += .25) { const x = CV.HX + 14 + (t - now) * pxs; if (x > x1 + 4 && x < x2 - 2) { px(g, '#8a5a18', x, y - 3, 1, 5); px(g, '#8a5a18', x - 2, y + 1, 3, 2); } }
     g.globalAlpha = 1;
   }
-  for (let i = rh.notes.length - 1; i >= 0; i--) {  // les monstres, les plus lointains d'abord
+  for (let i = rh.notes.length - 1; i >= 0; i--) {  // les monstres, les plus lointains d'abord, avec leur ombre
     const n = rh.notes[i]; if (n.judged && !n.missed) continue; if (n.end && n.missed) continue;
     const x = Math.round(CV.HX + 14 + (n.t - now) * pxs); if (x > W + 16 || x < -20) continue;
     const ago = now - n.t; if (n.missed && ago > .6) continue;
     if (n.missed) g.globalAlpha = Math.max(0, 1 - ago / .6);
-    if (n.kind === 'air') { const s = CV_BAT[Math.floor(rh.tick / 8 + i) % 2]; g.drawImage(s, x - 9, CV.AY - 5 + Math.round(Math.sin(rh.tick / 6 + i) * 2)); }
-    else g.drawImage(CV_SLIME, x - 8, CV.FLOOR - 12 - (Math.floor(rh.tick / 10 + i) % 2));
+    px(g, 'rgba(26,14,10,.35)', x - 6, CV.FLOOR - 1, 12, 2);
+    const s = cvMob(n.kind, i);
+    if (n.kind === 'air') g.drawImage(s, x - Math.floor(s.width / 2), CV.AY - 5 + Math.round(Math.sin(rh.tick / 6 + i) * 2));
+    else { const sq = Math.floor(rh.tick / 10 + i) % 2; g.drawImage(s, 0, 0, 16, 12, x - 8 - sq, CV.FLOOR - 12 + sq, 16 + sq * 2, 12 - sq); }  // la gelée s'écrase et rebondit
     g.globalAlpha = 1;
   }
-  for (const f of rh.fx) if (f.k === 'fly') {  // un monstre frappé s'envole en tournant
+  for (const f of rh.fx) if (f.k === 'fly') {  // un monstre frappé s'envole en tournant, après un éclat en étoile
     const p = f.t / 30, x = CV.HX + 18 + p * 160, y = f.y - Math.sin(p * Math.PI) * 50 - p * 40;
-    g.save(); g.globalAlpha = 1 - p; g.translate(Math.round(x), Math.round(y)); g.rotate(p * 8); g.drawImage(f.kind === 'air' ? CV_BAT[0] : CV_SLIME, -8, -6); g.restore();
+    if (f.t < 6) { const r = 4 + f.t * 3, c = f.t < 3 ? '#ffffff' : '#ffd84a'; px(g, c, CV.HX + 14 - r, f.y, r * 2, 1); px(g, c, CV.HX + 14, f.y - r, 1, r * 2); for (let d = 0; d < r * .7; d++) { px(g, c, CV.HX + 14 + d, f.y + d); px(g, c, CV.HX + 14 - d, f.y + d); px(g, c, CV.HX + 14 + d, f.y - d); px(g, c, CV.HX + 14 - d, f.y - d); } }
+    g.save(); g.globalAlpha = 1 - p; g.translate(Math.round(x), Math.round(y)); g.rotate(p * 8); g.drawImage(f.kind === 'air' ? CV_BAT[0][0] : CV_SLIME[0], -8, -6); g.restore();
   }
-  for (const s of rh.sparks) { g.globalAlpha = s.life / 18; px(g, s.col, s.x, s.y, 2, 2); g.globalAlpha = 1; }
-  if (rh.judge && rh.mode === 'play') pxFont(g, rh.judge.text, CV.HX + 14, rh.judge.y - 16, rh.judge.col, 6, 'center');
+  for (const s of rh.sparks) { g.globalAlpha = s.life / 18; px(g, s.col, s.x, s.y, 2, 2); if (s.life > 12) px(g, '#ffffff', s.x, s.y, 1, 1); g.globalAlpha = 1; }
+  if (rh.judge && rh.mode === 'play') { const j = rh.judge, up = Math.max(0, j.t - 18); pxFont(g, j.text, CV.HX + 15, j.y - 15 - up, '#1a0e0a', 6, 'center'); pxFont(g, j.text, CV.HX + 14, j.y - 16 - up, j.col, 6, 'center'); }
 }
 function cvDraw() {
   const now = rhNow(), bpm = rh.info?.bpm || 120, beat = rh.mode === 'play' ? Math.max(0, now) * bpm / 60 : rh.tick / 40;
-  cvScene(now, beat); cvLanes(now); cvHero(beat);
+  cvScene(now, beat); cvLanes(now, beat); cvHero(beat);
   if (rh.mode !== 'ready' && rh.mode !== 'load') {
     rhProgress(now, '#ffb84a'); pxFont(g, String(rh.score).padStart(7, '0'), 4, 14, '#ffffff', 7);
     if (rh.combo > 4) pxFont(g, rh.combo + ' combo', W - 4, 14, '#ffd84a', 7, 'right');
