@@ -12,12 +12,21 @@ Un jeu de rythme en course, sur un chemin au coucher du soleil : ta coureuse fil
 - **Rubans dorés** : sur les notes longues. Frappe le début, puis **garde la touche enfoncée** jusqu'au bout : chaque dixième de seconde tenu rapporte. Lâcher trop tôt arrête le ruban.
 - À la **souris** ou au **doigt** : la moitié haute de l'écran pour l'air, la moitié basse pour le sol (le doigt posé tient les rubans).
 - **Espace** : jouer · **P** : pause · **Plein écran** pendant la partie.
+- **Manette** : **Y**, **X**, **RB**, **RT** ou croix haut pour l'air ; **A**, **B**, **LB**, **LT** ou croix bas pour le sol (bouton tenu pour les rubans) ; **Start** pour la pause. Avant la partie, **A** ou **Start** lance le morceau.
+
+## Personnages
+
+Trois coureurs au choix, chacun avec sa course, son saut, ses coups et sa chute : la **coureuse** et son écharpe, le **chat** gris à collier et grelot (coups de griffe), le **robot** à visière (lame d'énergie, réacteurs au saut). Change-le dans les réglages (**Personnage**), ou avec **← →** (croix gauche / droite à la manette) avant la partie.
+
+## Les chemins
+
+Le décor dépend de la difficulté du morceau : **forêt** au coucher du soleil sous 4★, **neige** de nuit avec aurore et flocons de 4 à 7★, **ville** sous la pluie, néons et réverbères, à partir de 7★. Le chemin est affiché sous le personnage avant la partie.
 
 ## Précision et points
 
 Les notes sont jugées selon l'écart avec le bon moment : **Parfait** (environ ±45 ms), **Bien** (±90 ms), **OK** (±140 ms), sinon raté.
 
-Les points d'une note augmentent de 1 % par note de combo, jusqu'au double à 100 notes de suite ; une note ratée remet le combo à zéro. À la fin, la précision donne une note : **S** à partir de 95 %, **A** à 90 %, **B** à 80 %, **C** à 70 %, **D** en dessous.
+Les points d'une note augmentent de 1 % par note de combo, jusqu'au double à 100 notes de suite ; une note ratée remet le combo à zéro. À la fin, la précision donne une note : **S** à partir de 95 %, **A** à 90 %, **B** à 80 %, **C** à 70 %, **D** en dessous. Sous les résultats, la **courbe de précision** montre, tranche par tranche du morceau, où tu as été parfait (doré), bon (vert), juste (bleu) ou raté (rouge).
 
 ## Chansons et difficulté
 

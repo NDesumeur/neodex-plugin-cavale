@@ -12,12 +12,21 @@ A running rhythm game on a path at sunset: your runner dashes to the right, bats
 - **Golden ribbons**: on long notes. Hit the start, then **hold the key down** to the end: every tenth of a second held scores. Letting go too early ends the ribbon.
 - With the **mouse** or a **finger**: the top half of the screen for the air, the bottom half for the ground (a finger kept down holds ribbons).
 - **Space**: play · **P**: pause · **Full screen** during the game.
+- **Gamepad**: **Y**, **X**, **RB**, **RT** or d-pad up for the air; **A**, **B**, **LB**, **LT** or d-pad down for the ground (hold the button for ribbons); **Start** to pause. Before the game, **A** or **Start** starts the song.
+
+## Characters
+
+Three runners to choose from, each with its own run, jump, hits and fall: the **runner** and her scarf, the grey **cat** with collar and bell (claw swipes), the visored **robot** (energy blade, jet boots when jumping). Change it in the settings (**Character**), or with **← →** (d-pad left / right on a gamepad) before the game.
+
+## The paths
+
+The scenery depends on the song's difficulty: **forest** at sunset below 4★, **snow** at night with aurora and snowflakes from 4 to 7★, **city** in the rain with neon signs and street lamps from 7★. The path is shown under the character before the game.
 
 ## Accuracy and points
 
 Notes are judged by how far they are from the right moment: **Perfect** (about ±45 ms), **Good** (±90 ms), **OK** (±140 ms), otherwise a miss.
 
-A note's points rise by 1 % per note of combo, up to double at 100 notes in a row; a miss resets the combo. At the end, accuracy gives a grade: **S** from 95 %, **A** at 90 %, **B** at 80 %, **C** at 70 %, **D** below.
+A note's points rise by 1 % per note of combo, up to double at 100 notes in a row; a miss resets the combo. At the end, accuracy gives a grade: **S** from 95 %, **A** at 90 %, **B** at 80 %, **C** at 70 %, **D** below. Under the results, the **accuracy curve** shows, slice by slice through the song, where you were perfect (gold), good (green), fair (blue) or missed (red).
 
 ## Songs and difficulty
 

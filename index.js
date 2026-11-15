@@ -9,7 +9,7 @@ const HTML = `<div class="appWrap wide">
       <div class="row"><button class="btn" id="rhTabSongs">CHANSONS</button><button class="btn" id="rhTabMine">MES MUSIQUES</button></div>
       <div class="sysCard rhImport" id="rhImport" style="display:none"><div class="row"><button class="btn main" id="rhFileBtn">IMPORTER UN FICHIER AUDIO</button><input type="file" id="rhFile" accept="audio/*,.mp3,.m4a,.ogg,.opus,.wav,.flac,.webm" hidden></div><div class="row"><select class="f" id="rhMuList"></select><button class="btn" id="rhMuBtn">CRÉER LE NIVEAU</button></div><div class="row"><label>Difficulté <select class="f" id="rhStars"><option value="1">1 ★</option><option value="2">2 ★</option><option value="3" selected>3 ★</option><option value="4">4 ★</option><option value="5">5 ★</option><option value="6">6 ★</option><option value="7">7 ★</option><option value="8">8 ★</option><option value="9">9 ★</option><option value="10">10 ★</option></select></label></div><span class="hint" id="rhImpMsg">Un fichier ou une musique de NeoMusic : le jeu trouve son tempo et ses temps forts et en fait un niveau.</span></div>
       <div id="rhSongs"></div>
-      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label></div>
+      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><label>Personnage <select class="f gSel" id="cvChar"><option value="0" selected>Coureuse</option><option value="1">Chat</option><option value="2">Robot</option></select></label></div>
       <div class="hint">Les chauves-souris arrivent en l'air (J, K ou ↑), les gelées au sol (F, D ou ↓) : frappe quand elles touchent le cercle de leur voie. Deux monstres ensemble : les deux touches à la fois.</div><div class="hint">Sur un ruban doré, garde la touche enfoncée jusqu'au bout : chaque dixième de seconde tenu rapporte. À la souris ou au doigt : moitié haute de l'écran pour l'air, moitié basse pour le sol.</div><div class="hint">La difficulté de chaque niveau est calculée sur ses notes (densité, passages chargés) : de 1★ à 10★.</div>
     </div></div>
 </div>`;
@@ -881,10 +881,11 @@ function rhPause() { if (rh?.mode === 'play') { rh.mode = 'pause'; rhCtx?.suspen
 const rhWin = dt => RH.WIN.find(w => Math.abs(dt) <= w[0]);
 function rhHit(n, dt) {  // -> la fenêtre atteinte (PARFAIT, BIEN, OK), ou rien si la note est ratée
   const w = rhWin(dt); n.judged = true; if (!w) { rhMissed(n); return null; }
+  n.q = {PARFAIT: 1, BIEN: .67, OK: .33}[w[1]];
   rh.dts.push(dt); rh.combo++; rh.maxCombo = Math.max(rh.maxCombo, rh.combo); rh.counts[w[1]]++; rh.score += Math.round(w[2] * (1 + Math.min(rh.combo, 100) / 100));
   return w;
 }
-function rhMissed(n) { n.judged = true; n.missed = true; rh.combo = 0; rh.counts['RATÉ']++; }
+function rhMissed(n) { n.judged = true; n.missed = true; n.q = 0; rh.combo = 0; rh.counts['RATÉ']++; }
 function rhCheckEnd(now) {
   if (now <= rh.c.len + 1.5) return false;
   rh.mode = 'over'; rh.overAt = rh.tick; try { rh.src?.stop(); } catch {} rhFull(false);
@@ -985,13 +986,13 @@ $('rhFs').onclick = () => { rhFull(!document.fullscreenElement); $('rhFs').blur(
 $('rhOffset').addEventListener('change', () => { rhOffMs = +$('rhOffset').value; });
 $('rhClick').onchange = () => { rhAudio(); rhCtx.resume(); rhClick(); };  // le son choisi, pour l'entendre
 $('rhVol').oninput = () => { if (rhOut) rhOut.gain.value = +$('rhVol').value / 100 * .6; };
-for (const id of ['rhVol', 'rhClick', 'rhOffset']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
+for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
 setInterval(() => { if (rhCtx?.state === 'running' && (!view.classList.contains('on') || rh?.mode !== 'play')) rhCtx.suspend(); }, 200);  // la musique s'arrête avec la partie
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) rhPause(); });  // Échap sort du plein écran : on met en pause
 $('gNew').onclick = () => { if (rh) rhSelect(rh.song, rh.diff); $('gNew').blur(); };
 function rhInfo() { const res = games.rhythm || {}, all = Object.values(res); showStats([['Morceaux joués', all.length], ['Notes S', all.filter(r => r.grade === 'S').length], ['Meilleur combo', all.reduce((m, r) => Math.max(m, r.combo || 0), 0)]]); }
 function rhOpen() {
-  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset']) if (p[id] != null) $(id).value = p[id];
+  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar']) if (p[id] != null) $(id).value = p[id];
   rhOffMs = +$('rhOffset').value; rhInfo();
   if (rh) { rhList(); return gameLoop(rh, RHG.key, RHG.update, rhDrawAll); }
   const last = games.rhythmLast || {song: 0, diff: 'normal'}; rhSelect(last.song, last.diff).catch(() => rhSelect(0, 'normal'));
@@ -1096,10 +1097,11 @@ const CV_MOUNT1 = cvBand(90, (b, x) => {  // les montagnes au loin : sommets enn
   if (t > l) px(b, '#6a3458', x, t, 1, Math.min(10, 90 - t));
 });
 const CV_MOUNT2 = cvBand(80, (b, x) => { const t = 80 - Math.round(28 + cvRidge(x, 1.1, 26, 4)); px(b, '#58284e', x, t, 1, 80 - t); px(b, '#7a3a5e', x, t, 1, 1); });
-const cvPines = (h, col, lit, s, seed) => cnv(W, h, b => {  // une forêt de sapins en silhouette, quelques cimes éclairées
+const cvPines = (h, col, lit, s, seed, snow) => cnv(W, h, b => {  // une forêt de sapins en silhouette, quelques cimes éclairées
   px(b, col, 0, h - 8 - Math.round(7 * s), W, 8 + Math.round(7 * s));  // le pied de la forêt, sans trou de ciel entre les troncs
   for (let k = 0; k < W / (8 * s); k++) { const cx = Math.round(k * 8 * s + cvHash(k + seed) * 6 * s), th = Math.round((14 + cvHash(k * 3 + seed) * 16) * s);
-    for (let y = 0; y < th; y++) { const w = Math.max(0, Math.floor(y / th * 6 * s + ((y % Math.round(4 * s)) === 0 ? -1 : 0))); px(b, col, cx - w, h - 8 - th + y, w * 2 + 1, 1); if (y > 2 && w > 0) px(b, lit, cx + w, h - 8 - th + y, 1, 1); }
+    for (let y = 0; y < th; y++) { const w = Math.max(0, Math.floor(y / th * 6 * s + ((y % Math.round(4 * s)) === 0 ? -1 : 0))); px(b, col, cx - w, h - 8 - th + y, w * 2 + 1, 1); if (y > 2 && w > 0) px(b, lit, cx + w, h - 8 - th + y, 1, 1);
+      if (snow && (y === 0 || y % Math.round(4 * s) === 1)) px(b, snow, cx - w, h - 8 - th + y, w * 2 + 1, 1); }
     px(b, col, cx, h - 8, 1, 2); }
 });
 const CV_PINE1 = cvPines(56, '#3e1c3e', '#5a2a4a', 1, 1), CV_PINE2 = cvPines(78, '#22102a', '#3e1a34', 1.5, 7);
@@ -1111,8 +1113,112 @@ const CV_TUFT = [0, 1].map(f => [spr(['..k.....', '.kgk..k.', '.kgk.kgk', 'kgGgk
   spr([f ? '...rr...' : '..rr....', f ? '..rwwr..' : '.rwwr...', f ? '...rr.k.' : '..rr..k.', '...k.kgk', '..kgkgGk'], {k: '#0e2a0e', g: '#3a8a2a', G: '#7ad85a', r: '#e8506a', w: '#ffe8a0'}),
   spr([f ? '..yy....' : '.yy.....', f ? '.yooy...' : 'yooy....', f ? '..yy.k..' : '.yy..k..', '..k.kgk.', '.kgkgGgk'], {k: '#0e2a0e', g: '#3a8a2a', G: '#7ad85a', y: '#f8d84a', o: '#c8702a'})]);
 const CV_BIRD = [spr(['k...k', '.k.k.', '..k..'], {k: '#2a1430'}), spr(['.....', 'kkkkk', '..k..'], {k: '#2a1430'})];
+// les deux autres personnages : chaque image est posée pièce par pièce sur une grille 30×34 (comme la coureuse), puis cernée de noir
+function cvRig(draw) {
+  const G = Array.from({length: 34}, () => Array(30).fill('.'));
+  const put = (c, x, y) => { x = Math.round(x); y = Math.round(y); if (x >= 1 && x < 29 && y >= 1 && y < 33) G[y][x] = c; };  // une case de marge pour le contour
+  const rect = (c, x, y, w, h) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) put(c, x + i, y + j); };
+  const disc = (c, cx, cy, rx, ry = rx) => { for (let y = -ry; y <= ry; y++) for (let x = -rx; x <= rx; x++) if ((x / (rx + .4)) ** 2 + (y / (ry + .4)) ** 2 <= 1) put(c, cx + x, cy + y); };
+  const line = (c, x0, y0, x1, y1, w = 1) => { const n = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1)); for (let k = 0; k <= n; k++) rect(c, x0 + (x1 - x0) * k / n - (w >> 1), y0 + (y1 - y0) * k / n - (w >> 1), w, w); };
+  const limb = (c, x, y, [a, b], l1, l2, w, joint) => {  // deux segments : a, b = angles depuis la verticale (vers l'avant si positif)
+    const kx = x + Math.sin(a) * l1, ky = y + Math.cos(a) * l1, fx = kx + Math.sin(b) * l2, fy = ky + Math.cos(b) * l2;
+    line(c, x, y, kx, ky, w); line(c, kx, ky, fx, fy, w); if (joint) put(joint, kx, ky); return [fx, fy];
+  };
+  draw({put, rect, disc, line, limb});
+  return G.map((r, y) => r.map((c, x) => c === '.' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (G[y + dy]?.[x + dx] ?? '.') !== '.') ? 'k' : c).join(''));
+}
+// le chat gris : corps, ventre blanc, rayures, queue qui ondule, un œil vert (de profil), collier rouge et son grelot
+const CV_CAT_PAL = {k: '#14101c', o: '#8a94b0', O: '#b8c4dc', d: '#5a6280', w: '#f4f4fa', p: '#f0a0b8', e: '#9af05a', n: '#e8708a', r: '#e83a4a', y: '#f8d84a', c: '#ffffff'};
+function cvCat(P) {  // P : by (le corps monte ou descend), legs [avant proche, avant loin, arrière proche, arrière loin], tail (angle), claw, hurt
+  return cvRig(R => {
+    const by = P.by || 0, L = P.legs;
+    const leg = (c, x, y, ab, claw) => { const [fx, fy] = R.limb(c, x, y, ab, 4, 4, 2); R.put('w', fx, fy); if (claw) { R.put('c', fx + 1, fy - 1); R.put('c', fx + 2, fy); R.put('c', fx + 1, fy + 1); } };
+    leg('d', 18, 24 + by, L[1]); leg('d', 10, 25 + by, L[3]);  // les pattes du côté loin, plus sombres
+    let tx = 7, ty = 21 + by;
+    for (let i = 0; i < 8; i++) { const a = P.tail + i * (P.curl ?? .2), nx = tx - Math.cos(a) * 1.1, ny = ty - Math.sin(a) * 1.1; R.line(i > 5 ? 'd' : 'o', tx, ty, nx, ny, P.hurt ? 3 : 2); tx = nx; ty = ny; }
+    R.disc('o', 14, 22 + by, 7, 4); R.rect('O', 9, 18 + by, 9, 1);  // le corps, le dos éclairé
+    R.disc('w', 16, 25 + by, 4, 1);  // le ventre
+    for (const sx of [9, 12, 15]) R.line('d', sx, 19 + by, sx + 1, 20 + by);  // les rayures
+    leg('o', 19, 24 + by, L[0], P.claw); leg('o', 9, 25 + by, L[2]);
+    const hx = 23 + (P.hx || 0), hy = 15 + by + (P.hy || 0);
+    R.disc('o', hx, hy, 5, 4); R.rect('O', hx - 3, hy - 4, 6, 1);
+    for (const ex of [hx - 4, hx + 1]) { R.rect('o', ex, hy - 5, 3, 1); if (!P.hurt) { R.rect('o', ex + (ex < hx ? 0 : 1), hy - 6, 2, 1); R.put('o', ex + (ex < hx ? 0 : 2), hy - 7); R.put('p', ex + 1, hy - 5); } }
+    R.disc('w', hx + 3, hy + 2, 2, 1); R.put('n', hx + 5, hy + 1); R.put('d', hx + 4, hy + 3);
+    if (P.hurt) for (const [dx, dy] of [[0, -2], [2, -2], [1, -1], [0, 0], [2, 0]]) R.put('k', hx + 1 + dx, hy + dy);  // l'œil plissé
+    else { R.rect('e', hx + 1, hy - 2, 2, 3); R.put('k', hx + 2, hy - 1); R.put('k', hx + 2, hy); R.put('c', hx + 1, hy - 2); }
+    R.put('p', hx - 1, hy + 2);
+    R.rect('r', hx - 5, hy + 3, 3, 2); R.put('y', hx - 3, hy + 5);  // le collier et son grelot
+  });
+}
+const CV_CAT_ROWS = (() => {
+  const f = {};
+  for (let i = 0; i < 6; i++) {  // le galop : les pattes avant et arrière se croisent, le dos ondule
+    const p = i / 6 * Math.PI * 2, s = Math.sin(p), s2 = Math.sin(p + 1), fr = v => [.7 * v, v > 0 ? .7 * v + .25 : .7 * v - 1.1 * -v], bk = v => [.35 - .6 * v, .35 - .6 * v - .9 - (v > 0 ? .5 * v : 0)];
+    f['run' + i] = cvCat({by: i % 3 === 1 ? -1 : 0, legs: [fr(s), fr(s2), bk(s), bk(s2)], tail: .5 + .25 * Math.sin(p)});
+  }
+  f.jump = cvCat({by: -2, legs: [[1.1, 1.5], [.9, 1.2], [-1.0, -1.4], [-.8, -1.1]], tail: .1, curl: .1});
+  f.fall = cvCat({by: 0, legs: [[.4, .15], [.2, 0], [.3, -.5], [.1, -.6]], tail: 1, curl: .25});
+  f.slashA0 = cvCat({by: -1, hy: -1, legs: [[2.3, 2.7], [.3, 0], [.35, -.55], [.1, -.6]], tail: .6, claw: true});
+  f.slashA1 = cvCat({by: -1, legs: [[1.9, 1.7], [.3, 0], [.35, -.55], [.1, -.6]], tail: .5, claw: true});
+  f.slashG0 = cvCat({legs: [[1.2, 1.6], [.2, 0], [.35, -.55], [.1, -.6]], tail: .5, claw: true});
+  f.slashG1 = cvCat({hx: 1, legs: [[1.5, 1.8], [.4, .1], [-.2, -.9], [-.3, -1]], tail: .3, claw: true});
+  f.hurt = cvCat({by: 1, hx: -1, legs: [[-.3, -.6], [-.5, -.8], [.7, .2], [.5, 0]], tail: 1.3, curl: .05, hurt: true});
+  return f;
+})();
+// le robot : tête à visière (un seul œil de profil), antenne, torse à voyants, lame d'énergie pour les coups, réacteurs sous les pieds au saut
+const CV_BOT_PAL = {k: '#0e1018', m: '#b8c4d4', M: '#eef4fa', n: '#6a7890', j: '#3a4458', v: '#14304a', V: '#5af0ff', a: '#ff5a4a', g: '#7ef07a', b: '#8af8ff', B: '#ffffff', f: '#ff8a2a', F: '#ffe84a', x: '#ff4a4a'};
+function cvBot(P) {  // P : by, legs [proche, loin], arms [proche, loin], blade (angle de la lame), jet, hurt, ant (antenne tordue)
+  return cvRig(R => {
+    const by = P.by || 0;
+    const foot = ([fx, fy], c) => { R.rect(c, fx - 1, fy, 5, 2); if (P.jet) { R.rect('f', fx, fy + 2, 3, 1); R.put('F', fx + 1, fy + 2); R.put('f', fx + 1, fy + 3); } };
+    R.limb('n', 13, 14 + by, P.arms[1], 4, 4, 2, 'j');  // le bras loin
+    foot(R.limb('n', 14, 23 + by, P.legs[1], 4, 4, 3, 'j'), 'j');  // la jambe loin
+    R.rect('j', 12, 21 + by, 9, 3);  // le bassin
+    R.rect('m', 10, 12 + by, 12, 10); R.rect('M', 10, 12 + by, 12, 1); R.rect('M', 10, 12 + by, 1, 10); R.rect('n', 21, 13 + by, 1, 9);  // le torse
+    R.rect('n', 12, 15 + by, 6, 4); R.put(P.hurt ? 'x' : 'g', 13, 16 + by); R.put('a', 15, 16 + by); R.put('V', 13, 17 + by);  // le panneau et ses voyants
+    foot(R.limb('m', 17, 23 + by, P.legs[0], 4, 4, 3, 'j'), 'n');  // la jambe proche
+    const hx = 12 + (P.hx || 0), hy = 3 + by + (P.hy || 0);
+    R.rect('j', hx + 4, hy + 8, 4, 2);  // le cou
+    R.line('n', hx + 3, hy + 1, hx + 3 + (P.ant || 0), hy - 2); R.rect('a', hx + 2 + (P.ant || 0), hy - 3, 2, 1);  // l'antenne
+    R.rect('m', hx, hy + 1, 12, 8); R.rect('M', hx, hy + 1, 12, 1); R.rect('n', hx, hy + 8, 12, 1); R.put('j', hx + 2, hy + 4); R.put('j', hx + 2, hy + 5);
+    R.rect('v', hx + 6, hy + 3, 6, 4); R.rect(P.hurt ? 'x' : 'V', hx + 9, hy + 4, 2, 2); if (!P.hurt) R.put('B', hx + 9, hy + 4);  // la visière et l'œil
+    R.limb('k', 18, 14 + by, P.arms[0], 4, 4, 4);  // le bras proche, cerné de noir sur le torse
+    const [hx2, hy2] = R.limb('M', 18, 14 + by, P.arms[0], 4, 4, 2, 'j');  // le bras proche
+    if (P.blade != null) { const ex = hx2 + Math.sin(P.blade) * 9, ey = hy2 + Math.cos(P.blade) * 9; R.line('b', hx2, hy2, ex, ey, 2); R.line('B', hx2, hy2, ex, ey, 1); }
+    R.rect('n', hx2 - 1, hy2 - 1, 2, 2);  // la main
+  });
+}
+const CV_BOT_ROWS = (() => {
+  const f = {};
+  for (let i = 0; i < 6; i++) {  // la course : jambes et bras opposés, le genou plié quand la jambe revient
+    const p = i / 6 * Math.PI * 2, s = Math.sin(p), lg = v => [.55 * v, .55 * v - (v < 0 ? .9 : .15)], am = v => [-.6 * v, -.6 * v + .9];
+    f['run' + i] = cvBot({by: i % 3 === 1 ? -1 : 0, legs: [lg(s), lg(-s)], arms: [am(s), am(-s)]});
+  }
+  f.jump = cvBot({by: -2, legs: [[.9, -.3], [.6, -.5]], arms: [[-2.4, -2.7], [-2.2, -2.5]], jet: true});
+  f.fall = cvBot({legs: [[.25, 0], [-.1, -.15]], arms: [[1.7, 1.3], [-1.5, -1.9]], jet: true});
+  f.slashA0 = cvBot({by: -1, legs: [[.4, -.2], [-.2, -.4]], arms: [[2.4, 2.6], [-.6, -.2]], blade: 2.5});
+  f.slashA1 = cvBot({by: -1, legs: [[.4, -.2], [-.2, -.4]], arms: [[1.8, 1.6], [-.6, -.2]], blade: 1.7});
+  f.slashG0 = cvBot({legs: [[.5, .1], [-.4, -.6]], arms: [[1.3, 1.5], [-.6, -.2]], blade: 1.7});
+  f.slashG1 = cvBot({hx: 1, legs: [[.6, .1], [-.5, -.8]], arms: [[1.2, .9], [-.7, -.3]], blade: 1});
+  f.hurt = cvBot({hx: -1, hy: 1, legs: [[-.3, -.4], [.3, .2]], arms: [[-1.6, -2], [-1, -1.3]], hurt: true, ant: -2});
+  return f;
+})();
+const cvFrames = (rows, pal) => { const f = Object.fromEntries(Object.entries(rows).map(([k, r]) => [k, spr(r, pal)])); f.run = [0, 1, 2, 3, 4, 5].map(i => f['run' + i]); return f; };
+const CV_CHARS = [{name: 'Coureuse', f: {...CV_F, run: CV_RUN}, scarf: true}, {name: 'Chat', f: cvFrames(CV_CAT_ROWS, CV_CAT_PAL)}, {name: 'Robot', f: cvFrames(CV_BOT_ROWS, CV_BOT_PAL)}];
+const cvChr = () => CV_CHARS[+$('cvChar').value] || CV_CHARS[0];
+function cvPick(d) { const sel = $('cvChar'); sel.value = String((+sel.value + d + CV_CHARS.length) % CV_CHARS.length); gstore('rhythmPrefs', {}).cvChar = sel.value; saveGames(); }
+const cvTheme = () => (rh?.stars || 1) < 4 ? 0 : rh.stars < 7 ? 1 : 2;  // le chemin suit la difficulté du morceau : forêt (moins de 4★), neige (4 à 7★), ville (7★ et plus)
+const CV_THEMES = ['Forêt', 'Neige', 'Ville'];
 function cvScene(now, beat) {
   const bpm = rh.info?.bpm || 120, pxs = CV.PPB * bpm / 60, run = (rh.mode === 'play' ? Math.max(0, now) * pxs : 0) + rh.tick * .6, t = rh.tick, pulse = rh.mode === 'play' ? Math.max(0, 1 - (beat % 1) * 3) : 0;
+  [cvForest, cvSnow, cvCity][cvTheme()](run, t, pulse, beat);
+  if (rh.combo >= 20 && rh.mode === 'play') { g.globalAlpha = .25; for (let i = 0; i < 6; i++) px(g, '#fff0d0', ((i * 97 - t * 9) % W + W) % W, 30 + i * 27, 24, 1); g.globalAlpha = 1; }  // lignes de vitesse quand le combo monte
+}
+function cvPave(run, [m, c1, c2, hi, sh]) {  // les pavés, deux rangées décalées
+  for (let k = Math.floor(run / 16) - 1; ; k++) { const x = Math.round(k * 16 - run); if (x > W) break;
+    for (const [r, o] of [[0, 0], [1, 8]]) { const yy = CV.FLOOR + 5 + r * 9, xx = x + o, c = cvHash(k * 2 + r) > .5 ? c1 : c2; px(g, m, xx, yy, 15, 8); px(g, c, xx, yy, 14, 7); px(g, hi, xx, yy, 14, 1); px(g, sh, xx + 13, yy + 1, 1, 6); } }
+}
+function cvForest(run, t, pulse, beat) {  // forêt au coucher du soleil
   g.drawImage(CV_SKY, 0, 0);
   for (const [x, y, ph] of CV_STARS) { const tw = (t + ph * 7) % 90; if (y < 50) px(g, tw < 6 ? '#ffffff' : tw < 40 ? '#d8d0f8' : '#6a5a98', x, y); }
   const ss = t % 420; if (ss < 24) { const sx = 60 + (t / 420 | 0) * 97 % 180 + ss * 4, sy = 10 + ss * 1.5; for (let k = 0; k < 8; k++) px(g, k ? '#c8b8f0' : '#ffffff', sx - k * 2, sy - k * .75, 1, 1); }  // une étoile filante
@@ -1123,13 +1229,9 @@ function cvScene(now, beat) {
   cvWrap(CV_PINE1, run * .18, 128); cvWrap(CV_PINE2, run * .32, CV.FLOOR - 76);
   px(g, '#1a0e0a', 0, CV.FLOOR - 1, W, 1); px(g, '#4aa83a', 0, CV.FLOOR, W, 3); px(g, '#7ad85a', 0, CV.FLOOR, W, 1);
   px(g, '#5a3a24', 0, CV.FLOOR + 3, W, H - CV.FLOOR - 3);
-  for (let k = Math.floor(run / 16) - 1; ; k++) { const x = Math.round(k * 16 - run); if (x > W) break;  // les pavés, deux rangées décalées
-    for (const [r, o] of [[0, 0], [1, 8]]) { const yy = CV.FLOOR + 5 + r * 9, xx = x + o, c = cvHash(k * 2 + r) > .5 ? '#7a5638' : '#6e4c30'; px(g, '#3a2414', xx, yy, 15, 8); px(g, c, xx, yy, 14, 7); px(g, '#9a7050', xx, yy, 14, 1); px(g, '#4e3220', xx + 13, yy + 1, 1, 6); } }
+  cvPave(run, ['#3a2414', '#7a5638', '#6e4c30', '#9a7050', '#4e3220']);
   for (let k = Math.floor(run / 37) - 1; ; k++) { const x = Math.round(k * 37 - run); if (x > W) break; g.drawImage(CV_TUFT[(t >> 4) % 2][((k % 3) + 3) % 3], x, CV.FLOOR - 4); }  // herbes et fleurs qui bougent au vent
-  for (let k = Math.floor(run / 96) - 1; ; k++) { const x = Math.round(k * 96 + 70 - run); if (x > W + 8) break;  // les poteaux et leurs lanternes, qui brillent au temps fort
-    px(g, '#1a0e0a', x - 1, CV.FLOOR - 30, 4, 31); px(g, '#5a3a24', x, CV.FLOOR - 30, 2, 30); px(g, '#1a0e0a', x - 5, CV.FLOOR - 31, 10, 2);
-    if (pulse > .3) { g.globalAlpha = pulse * .35; for (let r = 9; r > 2; r -= 3) px(g, '#ffd860', x - 2 - r, CV.FLOOR - 24 - r, 6 + r * 2, 8 + r * 2); g.globalAlpha = 1; }
-    g.drawImage(CV_LANTERN[pulse > .3 ? 1 : 0], x - 2, CV.FLOOR - 29 + Math.round(Math.sin(t / 15 + k)), ); }
+  cvLanterns(run, t, pulse);
   for (let i = 0; i < 9; i++) {  // pétales qui tombent en tournoyant
     const fx = ((i * 71 - run * .7 - t * .3) % (W + 20) + W + 20) % (W + 20) - 10, fy = ((t * (.35 + (i % 3) * .15) + i * 53) % 210) + 10, sw = Math.round(Math.sin(t / 12 + i) * 2);
     px(g, i % 2 ? '#f8b0c0' : '#ffd8a0', fx + sw, fy, (t >> 3) % 2 ? 2 : 1, 1); }
@@ -1137,19 +1239,97 @@ function cvScene(now, beat) {
     const fx = ((i * 53 - run * .4) % (W + 20) + W + 20) % (W + 20) - 10, fy = 150 + Math.sin(t / 30 + i * 2) * 14 + i * 4;
     if ((beat + i * .37) % 1 < .6) { px(g, '#fff8a0', fx, fy, 1, 1); g.globalAlpha = .35; px(g, '#f8e84a', fx - 1, fy - 1, 3, 3); g.globalAlpha = 1; }
   }
-  if (rh.combo >= 20 && rh.mode === 'play') { g.globalAlpha = .25; for (let i = 0; i < 6; i++) px(g, '#fff0d0', ((i * 97 - t * 9) % W + W) % W, 30 + i * 27, 24, 1); g.globalAlpha = 1; }  // lignes de vitesse quand le combo monte
+}
+function cvLanterns(run, t, pulse, snow) {
+  for (let k = Math.floor(run / 96) - 1; ; k++) { const x = Math.round(k * 96 + 70 - run); if (x > W + 8) break;  // les poteaux et leurs lanternes, qui brillent au temps fort
+    px(g, '#1a0e0a', x - 1, CV.FLOOR - 30, 4, 31); px(g, '#5a3a24', x, CV.FLOOR - 30, 2, 30); px(g, '#1a0e0a', x - 5, CV.FLOOR - 31, 10, 2);
+    if (pulse > .3) { g.globalAlpha = pulse * .35; for (let r = 9; r > 2; r -= 3) px(g, '#ffd860', x - 2 - r, CV.FLOOR - 24 - r, 6 + r * 2, 8 + r * 2); g.globalAlpha = 1; }
+    g.drawImage(CV_LANTERN[pulse > .3 ? 1 : 0], x - 2, CV.FLOOR - 29 + Math.round(Math.sin(t / 15 + k)), );
+    if (snow) { px(g, snow, x - 5, CV.FLOOR - 33, 10, 2); px(g, snow, x - 1, CV.FLOOR - 3, 4, 3); } }
+}
+const cvSkyGrad = (b, sky, h) => { for (let y = 0; y < H; y++) { const f = Math.min(sky.length - 1.001, y / h * (sky.length - 1)), i = Math.floor(f); px(b, (f - i > .5 && (y % 2)) ? sky[i + 1] : sky[i], 0, y, W, 1); } };
+// la neige (4 à 7★) : nuit d'hiver, pleine lune, aurore, montagnes blanches, sapins enneigés, chemin de glace, flocons
+const CV_SKY_SNOW = cnv(W, H, b => {
+  cvSkyGrad(b, ['#070b22', '#0c1430', '#121e42', '#1a2a52', '#243a62', '#304e70', '#3e6478', '#567e84'], 150);
+  for (let y = -15; y <= 15; y++) for (let x = -15; x <= 15; x++) { const d = Math.hypot(x, y); if (d > 15) continue;
+    const cr = [[-5, -4, 3], [4, 3, 4], [-3, 7, 2], [6, -7, 2]].some(([a, c, r]) => Math.hypot(x - a, y - c) < r);
+    px(b, d > 13.6 ? '#c8ccd8' : cr ? '#d4d8e0' : x + y < -8 ? '#ffffff' : '#eef0f4', 72 + x, 44 + y); }
+  for (let a = 0; a < Math.PI * 2; a += .05) { const r = 20 + (Math.round(a * 20) % 2) * 2; px(b, 'rgba(220,230,255,.25)', 72 + Math.cos(a) * r, 44 + Math.sin(a) * r); }
+});
+const CV_MOUNT_S1 = cvBand(90, (b, x) => {
+  const t = 90 - Math.round(36 + cvRidge(x, 1.6, 34, 2)), l = 90 - Math.round(36 + cvRidge(x - 1, 1.6, 34, 2));
+  px(b, '#3a5478', x, t, 1, 90 - t); px(b, '#5a74a0', x, t, 1, 1); if (t < 42) px(b, l > t ? '#f4f8ff' : '#b8c8e0', x, t, 1, Math.round((42 - t) * .6));  // la neige seulement sur les sommets
+});
+const CV_MOUNT_S2 = cvBand(80, (b, x) => { const t = 80 - Math.round(28 + cvRidge(x, 1.1, 26, 5)); px(b, '#243a5c', x, t, 1, 80 - t); px(b, '#6a88b0', x, t, 1, 1); });
+const CV_PINE_S1 = cvPines(56, '#1c3450', '#c8d8ee', 1, 3, '#dce8f8'), CV_PINE_S2 = cvPines(78, '#0e1c30', '#a8bcd8', 1.5, 9, '#f4f8ff');
+function cvSnow(run, t, pulse) {
+  g.drawImage(CV_SKY_SNOW, 0, 0);
+  for (const [x, y, ph] of CV_STARS) { const tw = (t + ph * 7) % 90; if (y < 60) px(g, tw < 6 ? '#ffffff' : tw < 40 ? '#c8d8f8' : '#4a5a88', x, y); }
+  for (let x = 0; x < W; x += 2) {  // l'aurore qui ondule, plus vive sur le temps fort
+    const y = 20 + Math.sin(x / 46 + t / 120) * 9 + Math.sin(x / 15 + t / 70) * 3;
+    g.globalAlpha = Math.max(0, .12 + .08 * Math.sin(x / 30 - t / 60) + pulse * .1); px(g, '#5af0b0', x, y, 2, 10); px(g, '#7a9aff', x, y + 10, 2, 8);
+  }
+  g.globalAlpha = 1;
+  cvWrap(CV_MOUNT_S1, run * .04, 70); cvWrap(CV_MOUNT_S2, run * .09, 96);
+  if (pulse > 0) { g.globalAlpha = pulse * .18; px(g, '#a8d8ff', 0, 150, W, 26); g.globalAlpha = 1; }
+  cvWrap(CV_PINE_S1, run * .18, 128); cvWrap(CV_PINE_S2, run * .32, CV.FLOOR - 76);
+  px(g, '#0a1426', 0, CV.FLOOR - 1, W, 1); px(g, '#f4f8ff', 0, CV.FLOOR, W, 1); px(g, '#c8d8f0', 0, CV.FLOOR + 1, W, 2);
+  px(g, '#5a7498', 0, CV.FLOOR + 3, W, H - CV.FLOOR - 3);
+  cvPave(run, ['#3e5478', '#9ab4d4', '#8aa6c8', '#e4eef8', '#5e7898']);
+  for (let k = Math.floor(run / 41) - 1; ; k++) { const x = Math.round(k * 41 - run); if (x > W) break; px(g, '#0a1426', x - 1, CV.FLOOR - 3, 11, 1); px(g, '#c8d8f0', x, CV.FLOOR - 2, 9, 2); px(g, '#f4f8ff', x + 1, CV.FLOOR - 3, 6, 2); }  // des tas de neige
+  cvLanterns(run, t, pulse, '#f4f8ff');
+  for (let i = 0; i < 46; i++) {  // les flocons, plus gros et plus rapides devant
+    const v = i % 4, fx = ((i * 47 - run * (.3 + v * .15) - t * .2 + Math.sin(t / 25 + i) * 5) % (W + 10) + W + 10) % (W + 10) - 5, fy = (t * (.35 + v * .18) + i * 59) % 236;
+    px(g, v === 3 ? '#ffffff' : '#d8e4f8', fx, fy, v === 3 ? 2 : 1, v === 3 ? 2 : 1);
+  }
+}
+// la ville (7★ et plus) : nuit violette, deux rangées d'immeubles aux fenêtres allumées, enseignes au néon qui battent la mesure, réverbères, pluie
+const CV_SKY_CITY = cnv(W, H, b => {
+  cvSkyGrad(b, ['#0a0618', '#120a26', '#1c0e34', '#281240', '#38164c', '#4e1a56', '#6a205e', '#8a2a66'], 150);
+  for (let y = -9; y <= 9; y++) for (let x = -9; x <= 9; x++) { const d = Math.hypot(x, y); if (d <= 9 && Math.hypot(x + 4, y - 3) > 8) px(b, d > 8 ? '#e0a8d0' : '#fff0f8', 258 + x, 34 + y); }  // un croissant de lune
+});
+const cvTowers = (h, seed, wall, edge, lit, dim, neon) => cnv(W, h, b => {
+  for (let x = 0, k = 0; x < W; k++) {
+    const w = 18 + Math.floor(cvHash(k + seed) * 22), th = Math.round(h * (.35 + cvHash(k * 7 + seed) * .6)), top = h - th;
+    px(b, wall, x, top, w, th); px(b, edge, x, top, 1, th); px(b, edge, x, top, w, 1);
+    if (cvHash(k * 5 + seed) > .6) { px(b, wall, x + (w >> 1) - 1, top - 6, 2, 6); px(b, '#ff4a6a', x + (w >> 1) - 1, top - 7, 2, 1); }  // une antenne et sa lampe
+    for (let wy = top + 4; wy < h - 4; wy += 5) for (let wx = x + 3; wx < x + w - 3; wx += 4) px(b, cvHash(wx * 13 + wy * 7 + seed) > .62 ? lit : dim, wx, wy, 2, 2);
+    if (neon && cvHash(k * 11 + seed) > .45) { const nc = neon[k % neon.length], ny = top + 6 + Math.floor(cvHash(k + 3) * Math.max(1, th - 30));  // une enseigne au néon
+      px(b, '#0a0418', x + 2, ny - 1, w - 4, 6); px(b, nc, x + 3, ny, w - 6, 1); px(b, nc, x + 3, ny + 3, w - 6, 1); px(b, nc, x + 3, ny, 1, 4); px(b, nc, x + w - 4, ny, 1, 4); }
+    x += w + 1 + Math.floor(cvHash(k * 3 + seed) * 4);
+  }
+});
+const CV_CITY1 = cvTowers(100, 21, '#2a1642', '#3a2058', '#c8a0ff', '#3a2456');
+const CV_CITY2 = [0, 1].map(on => cvTowers(110, 33, '#140a24', '#22123a', '#ffd87a', '#2a1a3a', on ? ['#ff4ac8', '#4af0ff', '#ffe84a'] : ['#8a2a78', '#2a8a98', '#9a8a2a']));
+function cvCity(run, t, pulse) {
+  g.drawImage(CV_SKY_CITY, 0, 0);
+  for (const [x, y, ph] of CV_STARS) { const tw = (t + ph * 7) % 90; if (y < 34 && tw < 40) px(g, tw < 6 ? '#ffffff' : '#a888c8', x, y); }
+  cvWrap(CV_CITY1, run * .06, 80);
+  if (pulse > 0) { g.globalAlpha = pulse * .2; px(g, '#ff7ad8', 0, 150, W, 30); g.globalAlpha = 1; }
+  cvWrap(CV_CITY2[pulse > .3 ? 1 : 0], run * .2, CV.FLOOR - 110);
+  for (let y = 0; y < 30; y += 2) { g.globalAlpha = .02 + y * .007; px(g, '#ff9ae0', 0, CV.FLOOR - 30 + y, W, 2); } g.globalAlpha = 1;  // la brume rose de la rue, qui détache le personnage des immeubles
+  px(g, '#0a0418', 0, CV.FLOOR - 1, W, 1); px(g, '#a8a2c0', 0, CV.FLOOR, W, 1); px(g, '#6a6480', 0, CV.FLOOR + 1, W, 3);  // le trottoir
+  px(g, '#0a0418', 0, CV.FLOOR + 4, W, 1); px(g, '#24222e', 0, CV.FLOOR + 5, W, H - CV.FLOOR - 5);  // la route
+  for (let k = Math.floor(run / 24) - 1; ; k++) { const x = Math.round(k * 24 - run); if (x > W) break; px(g, '#4a4660', x, CV.FLOOR + 1, 1, 3); if (k % 2 === 0) px(g, '#e8c84a', x, CV.FLOOR + 24, 14, 2); }
+  for (let k = Math.floor(run / 120) - 1; ; k++) { const x = Math.round(k * 120 + 90 - run); if (x > W + 30) break;  // les réverbères et leur cône de lumière
+    g.globalAlpha = .08 + pulse * .14; for (let r = 0; r < 46; r += 2) px(g, '#ffe08a', x + 13 - r * .45, CV.FLOOR - 45 + r, r * .9 + 2, 2); px(g, '#ffe08a', x - 8, CV.FLOOR + 5, 42, 3); g.globalAlpha = 1;
+    px(g, '#0a0418', x - 1, CV.FLOOR - 48, 4, 48); px(g, '#4a4660', x, CV.FLOOR - 48, 2, 48); px(g, '#0a0418', x, CV.FLOOR - 51, 18, 3); px(g, '#6a6480', x + 1, CV.FLOOR - 50, 16, 1);
+    px(g, '#0a0418', x + 9, CV.FLOOR - 48, 8, 4); px(g, pulse > .3 ? '#fff8d0' : '#ffe08a', x + 10, CV.FLOOR - 47, 6, 2); }
+  g.globalAlpha = .45;
+  for (let i = 0; i < 40; i++) { const fx = ((i * 41 - t * 1.4 - run * .5) % (W + 30) + W + 30) % (W + 30) - 10, fy = (t * (5 + (i % 3)) + i * 67) % 250 - 10; px(g, '#a8c0ff', fx, fy, 1, 4); px(g, '#a8c0ff', fx - 1, fy + 4, 1, 2); }  // la pluie
+  g.globalAlpha = 1;
 }
 function cvHero(beat) {
   const t = rh.tick, sw = rh.swing && t - rh.swing.at < 10 ? rh.swing : null, hurt = t - rh.hurt < 16;
-  const air = t - rh.jumpAt < 16 || rh.held.air > 0, x = CV.HX - 18;
+  const C = cvChr(), F = C.f, air = t - rh.jumpAt < 16 || rh.held.air > 0, x = CV.HX - 18;
   const y = air ? CV.AY - 17 - (t - rh.jumpAt < 6 ? 6 - (t - rh.jumpAt) : 0) : CV.FLOOR - 33;
-  let f = CV_RUN[Math.floor(t / 4) % 6];
-  if (hurt) f = CV_F.hurt;
-  else if (sw) f = CV_F[(sw.kind === 'air' ? 'slashA' : 'slashG') + (t - sw.at < 3 ? 0 : 1)];
-  else if (air) f = t - rh.jumpAt < 8 ? CV_F.jump : CV_F.fall;
-  else if (rh.mode !== 'play') f = CV_RUN[Math.floor(t / 7) % 6];
+  let f = F.run[Math.floor(t / 4) % 6];
+  if (hurt) f = F.hurt;
+  else if (sw) f = F[(sw.kind === 'air' ? 'slashA' : 'slashG') + (t - sw.at < 3 ? 0 : 1)];
+  else if (air) f = t - rh.jumpAt < 8 ? F.jump : F.fall;
+  else if (rh.mode !== 'play') f = F.run[Math.floor(t / 7) % 6];
   if (hurt && t % 4 < 2) g.globalAlpha = .45;
-  for (let i = 0; i < 10; i++) px(g, i % 3 === 2 ? '#a82a3a' : '#e83a4a', x + 11 - i, y + 14 + Math.round(Math.sin(t / 4 - i * .7) * (1 + i / 4)), 1, 2);  // l'écharpe qui flotte derrière
+  if (C.scarf) for (let i = 0; i < 10; i++) px(g, i % 3 === 2 ? '#a82a3a' : '#e83a4a', x + 11 - i, y + 14 + Math.round(Math.sin(t / 4 - i * .7) * (1 + i / 4)), 1, 2);  // l'écharpe qui flotte derrière
   if (!air) { g.globalAlpha *= .35; px(g, '#1a0e0a', x + 6, CV.FLOOR - 1, 18, 2); g.globalAlpha = hurt && t % 4 < 2 ? .45 : 1; }
   g.drawImage(f, x, y); g.globalAlpha = 1;
   if (air) for (let k = 0; k < 3; k++) px(g, 'rgba(255,240,200,.35)', x - 2 - k * 5, y + 12 + k * 4, 5, 1);  // le saut, en l'air
@@ -1213,8 +1393,28 @@ function cvDraw() {
   }
   if (rh.mode === 'play' && now < 0) pxFont(g, String(Math.ceil(-now)), W / 2, 70, '#ffd84a', 16, 'center');
   rhScreens(60);
+  if (rh.mode === 'over' && rh.tick - rh.overAt > 20) cvCurveDraw();
+  if (rh.mode === 'ready') {  // le personnage (◀ ▶ pour changer) et le chemin de ce morceau
+    const nm = cvChr().name; pxFont(g, nm, W / 2, 216, '#ffffff', 7, 'center'); pxFont(g, '◀', W / 2 - 46, 216, '#ffd84a', 7, 'center'); pxFont(g, '▶', W / 2 + 46, 216, '#ffd84a', 7, 'center');
+    pxFont(g, CV_THEMES[cvTheme()], W / 2, 230, '#c8b8e8', 6, 'center');
+  }
   if (rh.tick % 15 === 0) cv.setAttribute('aria-label', 'Cavale, ' + (rh.info?.name || '') + ' : ' + ({ready: 'prêt', load: 'chargement', play: 'en jeu', pause: 'pause', over: 'fini'}[rh.mode] || rh.mode) + ', score ' + rh.score + ', combo ' + rh.combo + ', ' +
     Object.entries(rh.counts).map(([k, v]) => k.toLowerCase() + ' ' + v).join(', ') + ', ruban ' + (rh.holds || 0) + '.');
+}
+// la précision le long du morceau : B tranches, chacune la moyenne des notes jugées (rien si aucune)
+function cvCurve(notes, B = 48) {
+  const q = notes.filter(n => n.q != null); if (!q.length) return [];
+  const t0 = notes[0].t, t1 = notes.at(-1).t + .001, s = Array(B).fill(0), c = Array(B).fill(0);
+  for (const n of q) { const i = Math.max(0, Math.min(B - 1, Math.floor((n.t - t0) / (t1 - t0) * B))); s[i] += n.q; c[i]++; }
+  return s.map((v, i) => c[i] ? v / c[i] : null);
+}
+const cvQCol = v => v >= .85 ? '#ffd84a' : v >= .6 ? '#8ee8a0' : v >= .3 ? '#7fe0ee' : '#e85a6a';
+function cvCurveDraw() {  // sous les résultats : une barre par tranche, dorée si tout est parfait, rouge si tout est raté
+  const c = cvCurve(rh.notes), x0 = 16, w = 6, y0 = 172, h = 44;
+  g.fillStyle = 'rgba(11,3,28,.8)'; g.fillRect(8, y0 - 14, W - 16, h + 22);
+  pxFont(g, 'PRÉCISION AU FIL DU MORCEAU', W / 2, y0 - 4, '#e8e0ff', 6, 'center');
+  for (let x = x0; x < x0 + 48 * w; x += 4) px(g, 'rgba(255,255,255,.25)', x, y0 + 2, 2, 1);  // la ligne des 100 %
+  c.forEach((v, i) => { if (v == null) return; const bh = Math.max(1, Math.round(v * h)); px(g, cvQCol(v), x0 + i * w, y0 + 2 + h - bh, w - 1, bh); });
 }
 // la souris ou le doigt : moitié haute = air, moitié basse = sol (relâcher compte pour les rubans)
 const cvPtr = new Map();
@@ -1224,6 +1424,7 @@ const CV_KEYS = {j: 'air', k: 'air', ArrowUp: 'air', f: 'sol', d: 'sol', ArrowDo
 document.addEventListener('keydown', e => {
   if (!keyOk(e) || !rh) return; const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (rh.mode === 'play' && CV_KEYS[k]) { e.preventDefault(); if (!e.repeat) cvHit(CV_KEYS[k]); return; }
+  if (rh.mode !== 'play' && (k === 'ArrowLeft' || k === 'ArrowRight')) { e.preventDefault(); return cvPick(k === 'ArrowLeft' ? -1 : 1); }
   if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!e.repeat) rhPress(); }
   if (k === 'p' || k === 'Escape') rhPause();
 });
@@ -1231,8 +1432,22 @@ document.addEventListener('keyup', e => {
   if (e.key === ' ' && keyOk(e)) e.preventDefault();  // un bouton qui garderait le focus ne se déclenche pas à l'espace
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (CV_KEYS[k]) cvUp(CV_KEYS[k]);
 });
-addEventListener('blur', () => { if (rh?.held) rh.held = {air: 0, sol: 0}; });  // une touche lâchée hors de la fenêtre ne reste pas « tenue »
-{  // vérification : chaque difficulté donne des monstres en l'air et au sol, des doublés et des rubans ; le jugement (bonne voie, mauvaise voie, ruban tenu puis lâché)
+addEventListener('blur', () => { if (rh?.held) rh.held = {air: 0, sol: 0}; });
+{  // la manette : Y, X, RB, RT ou croix haut = en l'air ; A, B, LB, LT ou croix bas = au sol (tenir pour les rubans) ; Start = pause ; hors partie, A ou Start joue et la croix gauche / droite change de personnage
+  const AIR = [3, 2, 5, 7, 12], SOL = [0, 1, 4, 6, 13]; let prev = [];
+  const loop = () => {
+    requestAnimationFrame(loop);
+    const p = [...(navigator.getGamepads?.() || [])].find(Boolean);
+    if (!p || !rh || !view.classList.contains('on')) { prev = []; return; }
+    const now = p.buttons.map(b => b.pressed), hit = i => now[i] && !prev[i], up = i => !now[i] && prev[i];
+    for (const [kind, list] of [['air', AIR], ['sol', SOL]]) for (const i of list) { if (up(i)) cvUp(kind); if (hit(i) && rh.mode === 'play') cvHit(kind); }
+    if (rh.mode === 'play') { if (hit(9)) rhPause(); }
+    else { if (hit(0) || hit(9)) rhPress(); if (hit(14)) cvPick(-1); if (hit(15)) cvPick(1); }
+    prev = now;
+  };
+  requestAnimationFrame(loop);
+}  // une touche lâchée hors de la fenêtre ne reste pas « tenue »
+function cvCheck() {  // vérification : chaque difficulté donne des monstres en l'air et au sol, des doublés et des rubans ; le jugement (bonne voie, mauvaise voie, ruban tenu puis lâché)
   const c = rhCompose(RH_SONGS[3]), ch = Object.keys(RH_DIFFS).map(d => RHG.chart(rhChart(c, d), c, d)), bad = [];
   if (!ch.every(x => x.some(n => n.kind === 'air') && x.some(n => n.kind === 'sol'))) bad.push('voies');
   if (!ch.some(x => x.some((n, i) => i && Math.abs(n.t - x[i - 1].t) < .01)) || !ch.some(x => x.some(n => n.end))) bad.push('doublés ou rubans');
@@ -1244,9 +1459,18 @@ addEventListener('blur', () => { if (rh?.held) rh.held = {air: 0, sol: 0}; });  
   cvHit('air', 1.01); cvHit('sol', 1.02); cvHit('sol', 2); cvHit('sol', 3.02);
   const n3 = rh.notes[3]; cvStep(3.25); cvStep(3.5); cvUp('sol', 3.55); cvUp('sol', 3.55); cvUp('sol', 3.55); cvStep(3.7);
   if (rh.counts.PARFAIT !== 3 || !rh.notes[2].missed || !n3.broke || n3.ticks !== 5) bad.push('jugement ' + JSON.stringify(rh.counts) + ' ' + n3.ticks);
+  if (rh.notes[0].q !== 1 || rh.notes[2].q !== 0) bad.push('précision des notes');
   rh = keep;
-  console.assert(!bad.length, 'cavale', bad);
+  const keys = ['run0', 'run1', 'run2', 'run3', 'run4', 'run5', 'jump', 'fall', 'slashA0', 'slashA1', 'slashG0', 'slashG1', 'hurt'];
+  if (!CV_CHARS.every(ch => keys.every(k => ch.f[k]?.width === 30 && ch.f[k].height === 34) && ch.f.run.length === 6)) bad.push('images des personnages');
+  const th = st => { const k = rh; rh = {stars: st}; const r = cvTheme(); rh = k; return r; };
+  if (th(1) !== 0 || th(3.9) !== 0 || th(4) !== 1 || th(6.9) !== 1 || th(7) !== 2 || th(10) !== 2) bad.push('chemins');
+  const cu = cvCurve([{t: 0, q: 1}, {t: 1.5, q: 0}, {t: 2.5}, {t: 10, q: .67}], 10);
+  if (cu.length !== 10 || cu[0] !== 1 || cu[1] !== 0 || cu[2] !== null || cu[9] !== .67) bad.push('courbe ' + JSON.stringify(cu));
+  return bad.length ? bad.join(', ') : 'ok';
 }
+console.assert(cvCheck() === 'ok', 'cavale', cvCheck());
+cv.__cv = {st: () => rh, hit: cvHit, up: cvUp, theme: cvTheme, chr: () => cvChr().name, pick: cvPick, curve: cvCurve, check: cvCheck};
 ctx.onOpen(() => rhOpen());
 }
 
