@@ -379,5 +379,7 @@
   "Forêt": "Forest",
   "Neige": "Snow",
   "Ville": "City",
-  "PRÉCISION AU FIL DU MORCEAU": "ACCURACY ALONG THE SONG"
+  "PRÉCISION AU FIL DU MORCEAU": "ACCURACY ALONG THE SONG",
+  "précision des notes": "note accuracy",
+  "images des personnages": "character images"
 }
