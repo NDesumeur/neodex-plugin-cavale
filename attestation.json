@@ -1,9 +1,9 @@
 {
   "pluginId": "neodex.cavale",
   "repo": "NDesumeur/neodex-plugin-cavale",
-  "version": "1.1.1",
-  "sha256": "58e768b367403639ba12364f45a939e1d9fb286d85a4a9ac71c542e8f7d64d08",
-  "approvedAt": "2026-11-16T16:38:47.625Z",
+  "version": "1.2.0",
+  "sha256": "ab5fe06169e9970fe7dc2a15c5ace7ddb754992a9db914ea485bf31a607a6b99",
+  "approvedAt": "2026-11-20T01:51:13.779Z",
   "neobase": ">=4.1.0",
-  "signature": "VfDJhdtMdurqu4Cxe5UelTELaNvm4C8VEzxlIvbJlJCe/IYbrvDoHdlyojL31G0CWg8f80M0Jstj4ytGndaYCA=="
+  "signature": "hA1vBGd/wFEgDCmP+kPQSJ8XR/Cl1sBtSJvzr+J/h8Xi/vyE7+5vpirNHXiBrQvxRm8sZ6HXJGZJjMB7ynxyCA=="
 }
