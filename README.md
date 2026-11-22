@@ -36,6 +36,14 @@ L'onglet **Chansons** reprend les 1200 morceaux de Rythme, en quatre difficulté
 
 Dans **Mes musiques**, crée un niveau à partir d'un **fichier audio** importé ou d'une musique de ta bibliothèque **NeoMusic** : le jeu trouve son tempo et ses temps forts et en fait un niveau, à la **difficulté** choisie (1 à 10 étoiles).
 
+## Boss, pouvoirs et niveaux
+
+- **Boss** : sur les 8 mesures les plus chargées de la fin du morceau (et, pour un morceau de plus de 90 s, sur celles du début), un boss couronné arrive par la droite. Chaque monstre frappé le blesse ; vide sa barre de vie avant la fin du passage pour le vaincre (2000 points de bonus), sinon il s'enfuit. Le boss change avec le chemin : gelée géante, fantôme ou chauve-souris.
+- **Pouvoirs** : la **Coureuse** gagne le double de points sur les rubans, le **Chat** a 9 vies (9 ratés qui ne cassent pas le combo), le **Robot** frappe les boss deux fois plus fort.
+- **Niveaux** : chaque personnage gagne de l'expérience à chaque morceau (plus pour un boss vaincu) ; son niveau s'affiche sous son nom.
+- Le coup d'épée change avec le jugement (grand et doré sur un PARFAIT), les monstres se moquent quand tu en rates un, et chaque personnage a sa musique de victoire.
+- **Notes cachées** (réglage) : les monstres disparaissent avant d'arriver.
+
 ## Réglages
 
 - **Volume** de la musique.
@@ -51,3 +59,7 @@ Tes scores et notes par niveau et tes réglages sont enregistrés par NeoDex, sa
 Dans NeoDex : **NeoStore → À découvrir → Cavale → Installer**.
 
 Développer un plugin : voir le [SDK NeoDex](https://github.com/NDesumeur/neodex-sdk).
+
+## Six chemins
+
+En plus de la forêt, de la neige et de la ville, trois nouveaux chemins : le désert au coucher du soleil (pyramides, cactus, virevoltants), le château la nuit (rempart, torches, bannières, chauves-souris) et le pont d'un bateau (voiles, mer qui brille sur le temps, mouettes). Chaque niveau de difficulté a deux chemins possibles, choisis selon le morceau ; l'option « Chemin » en impose un pour tous les morceaux.

@@ -9,7 +9,7 @@ const HTML = `<div class="appWrap wide">
       <div class="row"><button class="btn" id="rhTabSongs">CHANSONS</button><button class="btn" id="rhTabMine">MES MUSIQUES</button></div>
       <div class="sysCard rhImport" id="rhImport" style="display:none"><div class="row"><button class="btn main" id="rhFileBtn">IMPORTER UN FICHIER AUDIO</button><input type="file" id="rhFile" accept="audio/*,.mp3,.m4a,.ogg,.opus,.wav,.flac,.webm" hidden></div><div class="row"><select class="f" id="rhMuList"></select><button class="btn" id="rhMuBtn">CRÉER LE NIVEAU</button></div><div class="row"><label>Difficulté <select class="f" id="rhStars"><option value="1">1 ★</option><option value="2">2 ★</option><option value="3" selected>3 ★</option><option value="4">4 ★</option><option value="5">5 ★</option><option value="6">6 ★</option><option value="7">7 ★</option><option value="8">8 ★</option><option value="9">9 ★</option><option value="10">10 ★</option></select></label></div><span class="hint" id="rhImpMsg">Un fichier ou une musique de NeoMusic : le jeu trouve son tempo et ses temps forts et en fait un niveau.</span></div>
       <div id="rhSongs"></div>
-      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><label>Personnage <select class="f gSel" id="cvChar"><option value="0" selected>Coureuse</option><option value="1">Chat</option><option value="2">Robot</option></select></label></div>
+      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label title="Le décor de la course : selon le morceau, ou toujours le même">Chemin <select class="f gSel" id="cvPath"><option value="" selected>Selon le morceau</option><option value="0">Forêt</option><option value="1">Neige</option><option value="2">Ville</option><option value="3">Désert</option><option value="4">Château</option><option value="5">Bateau</option></select></label><label title="Les monstres disparaissent avant d'arriver : il faut les deviner">Notes cachées <select class="f gSel" id="cvHid"><option value="0" selected>Non</option><option value="1">Oui</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><label>Personnage <select class="f gSel" id="cvChar"><option value="0" selected>Coureuse</option><option value="1">Chat</option><option value="2">Robot</option></select></label></div>
       <div class="hint">Les chauves-souris arrivent en l'air (J, K ou ↑), les gelées au sol (F, D ou ↓) : frappe quand elles touchent le cercle de leur voie. Deux monstres ensemble : les deux touches à la fois.</div><div class="hint">Sur un ruban doré, garde la touche enfoncée jusqu'au bout : chaque dixième de seconde tenu rapporte. À la souris ou au doigt : moitié haute de l'écran pour l'air, moitié basse pour le sol.</div><div class="hint">La difficulté de chaque niveau est calculée sur ses notes (densité, passages chargés) : de 1★ à 10★.</div>
     </div></div>
 </div>`;
@@ -944,7 +944,7 @@ function rhCheckEnd(now) {
   rh.acc = acc; rh.grade = acc >= .95 ? 'S' : acc >= .9 ? 'A' : acc >= .8 ? 'B' : acc >= .7 ? 'C' : 'D';
   const k = rh.info.key, res = gstore('rhythm', {}); rh.record = best(k, rh.score);
   if (rh.record || !res[k]) res[k] = {score: rh.score, acc: Math.round(acc * 1000) / 10, grade: rh.grade, combo: rh.maxCombo};
-  rh.adj = rhAutoOffset(rh.dts); saveGames(); sfx('SAB'.includes(rh.grade) ? 'launch' : 'notify'); rhList(); rhInfo();
+  rh.adj = rhAutoOffset(rh.dts); RHG.over?.(); saveGames(); sfx('SAB'.includes(rh.grade) ? 'launch' : 'notify'); rhList(); rhInfo();
   return true;
 }
 function rhOffsetStep(dts) {  // décalage automatique : si tu tapes en moyenne en retard (ou en avance), on corrige de 70 % de l'écart
@@ -1037,13 +1037,13 @@ $('rhFs').onclick = () => { rhFull(!document.fullscreenElement); $('rhFs').blur(
 $('rhOffset').addEventListener('change', () => { rhOffMs = +$('rhOffset').value; });
 $('rhClick').onchange = () => { rhAudio(); rhCtx.resume(); rhClick(); };  // le son choisi, pour l'entendre
 $('rhVol').oninput = () => { if (rhOut) rhOut.gain.value = +$('rhVol').value / 100 * .6; };
-for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
+for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar', 'cvHid', 'cvPath']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
 setInterval(() => { if (rhCtx?.state === 'running' && (!view.classList.contains('on') || rh?.mode !== 'play')) rhCtx.suspend(); }, 200);  // la musique s'arrête avec la partie
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) rhPause(); });  // Échap sort du plein écran : on met en pause
 $('gNew').onclick = () => { if (rh) rhSelect(rh.song, rh.diff); $('gNew').blur(); };
-function rhInfo() { const res = games.rhythm || {}, all = Object.values(res); showStats([['Morceaux joués', all.length], ['Notes S', all.filter(r => r.grade === 'S').length], ['Meilleur combo', all.reduce((m, r) => Math.max(m, r.combo || 0), 0)]]); }
+function rhInfo() { const res = games.rhythm || {}, all = Object.values(res); showStats([['Boss vaincus', games.cavaleBoss || 0], ['Morceaux joués', all.length], ['Notes S', all.filter(r => r.grade === 'S').length], ['Meilleur combo', all.reduce((m, r) => Math.max(m, r.combo || 0), 0)]]); }
 function rhOpen() {
-  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar']) if (p[id] != null) $(id).value = p[id];
+  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset', 'cvChar', 'cvHid', 'cvPath']) if (p[id] != null) $(id).value = p[id];
   rhOffMs = +$('rhOffset').value; rhInfo();
   if (rh) { rhList(); return gameLoop(rh, RHG.key, RHG.update, rhDrawAll); }
   const last = games.rhythmLast || {song: 0, diff: 'normal'}; rhSelect(last.song, last.diff).catch(() => rhSelect(0, 'normal'));
@@ -1067,7 +1067,8 @@ const RHG = {key: 'cavale', factor: 1, color: '#ffb84a',
     }
     return out;
   },
-  reset() { Object.assign(rh, {judge: null, held: {air: 0, sol: 0}, jumpAt: -9, swing: null, hurt: -99, holds: 0}); },
+  reset() { Object.assign(rh, {judge: null, held: {air: 0, sol: 0}, jumpAt: -9, swing: null, hurt: -99, holds: 0, bosses: rh.c ? cvBosses(rh.notes, rh.c.len, rh.info?.bpm || 120) : [], bossWins: 0, lives: 9, xpGain: 0}); },
+  over() { cvOver(); },
   update() { const now = rhNow(); cvStep(now); rhCheckEnd(now); },
   draw() { cvDraw(); },
 };
@@ -1076,14 +1077,18 @@ function cvStep(now) {
     if (n.t - now > .2) break;
     if (n.holding) { cvSettle(n, now); if (now >= n.end) { n.holding = false; n.done = true; cvFx(n, [0, 'FINI', 0, '#ffd84a'], true); } continue; }
     if (n.judged) continue;
-    if (now - n.t > RH.WIN.at(-1)[0]) { rhMissed(n); cvFx(n, null); }
+    if (now - n.t > RH.WIN.at(-1)[0]) {
+      if (rh.lives > 0 && cvChr().pw === 'vies') { rh.lives--; (rh.hist ??= []).push([n.t, 0]); n.judged = true; n.missed = true; rh.counts['RATÉ']++; } else rhMissed(n);
+      cvFx(n, null); rh.fx.push({k: 'laugh', t: 0, y: cvY(n.kind)});
+    }
   }
   for (const s of rh.sparks) { s.x += s.vx; s.y += s.vy; s.vy += .1; s.life--; } rh.sparks = rh.sparks.filter(s => s.life > 0);
   for (const f of rh.fx) f.t++; rh.fx = rh.fx.filter(f => f.t < 30);
   if (rh.judge && --rh.judge.t <= 0) rh.judge = null;
+  for (const b of rh.bosses || []) if (!b.done && now > b.t1) { b.done = 'flee'; b.at = rh.tick; }
 }
 // un ruban tenu : des points tous les dixièmes de seconde jusqu'à maintenant (ou jusqu'au bout)
-function cvSettle(n, now) { while (n.last + .1 <= Math.min(now, n.end) + 1e-6) { n.last += .1; n.ticks++; rh.holds++; rh.score += 30; } }
+function cvSettle(n, now) { const pts = rh.mode === 'play' && cvChr().pw === 'ruban' ? 60 : 30; while (n.last + .1 <= Math.min(now, n.end) + 1e-6) { n.last += .1; n.ticks++; rh.holds++; rh.score += pts; } }
 const cvY = kind => kind === 'air' ? CV.AY : CV.GY;
 function cvFx(n, w, quiet) {
   rh.judge = {text: w ? w[1] : 'RATÉ', col: w ? w[3] : '#8a9ac8', t: 24, y: cvY(n.kind)};
@@ -1104,7 +1109,7 @@ function cvHit(kind, now = rhNow()) {
     if (Math.abs(n.t - now) <= RH.WIN.at(-1)[0] && (!near || Math.abs(n.t - now) < Math.abs(near.t - now))) near = n;
   }
   if (!near) return;
-  const w = rhHit(near, now - near.t); cvFx(near, w, !!near.end);
+  const w = rhHit(near, now - near.t); cvFx(near, w, !!near.end); rh.swing.q = w?.[1]; if (w) cvBossHit(near.t);
   if (w && near.end) { near.holding = true; near.last = near.t; }
 }
 function cvUp(kind, now) {  // lâcher : un ruban en cours s'arrête là (sauf dans le dernier dixième de seconde, compté comme fini)
@@ -1257,12 +1262,70 @@ const CV_BOT_ROWS = (() => {
 const cvFrames = (rows, pal) => { const f = Object.fromEntries(Object.entries(rows).map(([k, r]) => [k, spr(r, pal)])); f.run = [0, 1, 2, 3, 4, 5].map(i => f['run' + i]); return f; };
 const CV_CHARS = [{name: 'Coureuse', f: {...CV_F, run: CV_RUN}, scarf: true}, {name: 'Chat', f: cvFrames(CV_CAT_ROWS, CV_CAT_PAL)}, {name: 'Robot', f: cvFrames(CV_BOT_ROWS, CV_BOT_PAL)}];
 const cvChr = () => CV_CHARS[+$('cvChar').value] || CV_CHARS[0];
+/* ---------- 1.3.0 : boss sur les passages les plus chargés, pouvoirs et niveaux des personnages, coups selon le jugement, musique de victoire ---------- */
+const cvVal = (id, d) => { const v = $(id)?.value; return v == null || v === '' ? d : v; };
+// les boss : sur les 8 mesures les plus chargées de la fin du morceau (et, au-delà de 90 s, sur les plus chargées du début) ; chaque coup réussi les blesse
+function cvBosses(notes, len, bpm) {
+  const win = 32 * 60 / bpm, ts = notes.map(n => n.t);
+  const pick = (a, b) => { let bi = -1, bn = 0, j = 0; for (let i = 0; i < ts.length; i++) { if (j < i) j = i; while (j < ts.length && ts[j] < ts[i] + win) j++; if (ts[i] >= a && ts[i] + win <= b && j - i > bn) { bn = j - i; bi = i; } }
+    return bi < 0 || bn < 8 ? null : {t0: ts[bi], t1: ts[bi] + win, hp: Math.ceil(bn * .7), max: Math.ceil(bn * .7), done: '', at: 0, hitAt: -99}; };
+  const L = [], last = pick(len * .45, len + 1);
+  if (len > 90) { const first = pick(len * .08, last ? last.t0 - 4 : len * .45); if (first) L.push(first); }
+  if (last) L.push(last); return L;
+}
+{ const ns = []; for (let t = 1; t < 120; t += .5) ns.push({t}); for (let t = 100; t < 110; t += .125) ns.push({t}); ns.sort((a, b) => a.t - b.t);
+  const B = cvBosses(ns, 120, 120); console.assert(B.length === 2 && B[1].t0 >= 93 && B[1].t0 <= 100 && B[1].t1 >= 109.9 && B[0].t1 < B[1].t0 && B[1].hp > 20, 'cvBosses', B); }
+const CV_CROWN = spr(['.k.k.k.', 'kykykyk', 'kyyyyyk', 'kyryryk', 'kyyyyyk', 'kkkkkkk'], {k: '#1a0e0a', y: '#ffd84a', r: '#e83a4a'});
+function cvBossHit(t) {
+  const b = rh.bosses?.find(b => !b.done && t >= b.t0 - .1 && t <= b.t1); if (!b) return;
+  b.hp -= cvChr().pw === 'boss' ? 2 : 1; b.hitAt = rh.tick;
+  if (b.hp <= 0) { b.done = 'win'; b.at = rh.tick; rh.score += 2000; rh.bossWins = (rh.bossWins || 0) + 1; for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, v = 1 + Math.random() * 3; rh.sparks.push({x: W - 64, y: 140, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 18, col: i % 2 ? '#ffd84a' : '#ffffff'}); } }
+}
+function cvBoss(now, beat) {  // le boss arrive par la droite, encaisse (il tremble), puis explose ou s'enfuit ; sa barre de vie en haut
+  if (rh.mode !== 'play' && rh.mode !== 'pause') return;
+  const th = cvTheme() % 3;
+  for (const b of rh.bosses || []) {
+    const into = now - (b.t0 - 1.5); if (into < 0) continue;
+    const k = b.done ? rh.tick - b.at : 0; if (k > 60) continue;
+    let x = W - 64 + (b.done ? 0 : Math.max(0, 1 - into / 1.5) * 100) + (b.done === 'flee' ? k * 3 : 0);
+    const img = th === 0 ? CV_SLIME[0] : th === 1 ? CV_GHOST : CV_BAT[1][Math.floor(rh.tick / 8) % 2], s = 3, bw = img.width * s, bh = img.height * s;
+    const y = (th === 0 ? CV.FLOOR - bh : CV.AY - Math.round(bh / 2) + 8) + Math.round(Math.sin(beat * Math.PI) * 2), sh = rh.tick - b.hitAt < 5 ? (rh.tick % 2 ? 2 : -2) : 0;
+    if (b.done === 'win') { g.globalAlpha = Math.max(0, 1 - k / 40); for (let j = 0; j < 12; j++) { const a = j / 12 * Math.PI * 2, r = 10 + k * 2.5; px(g, j % 2 ? '#ffd84a' : '#ffffff', x + Math.cos(a) * r, y + bh / 2 + Math.sin(a) * r, 3, 3); } }
+    g.drawImage(img, Math.round(x - bw / 2 + sh), y, bw, bh); g.drawImage(CV_CROWN, Math.round(x - 7 + sh), y - 12, 14, 12);
+    if (rh.tick - b.hitAt < 3) { g.globalAlpha = .5; px(g, '#ffffff', x - bw / 2 + sh, y, bw, bh); }
+    g.globalAlpha = 1;
+    if (!b.done) { px(g, '#1a0e0a', W / 2 - 51, 20, 102, 6); px(g, '#a82a3a', W / 2 - 50, 21, 100, 4); px(g, '#ffd84a', W / 2 - 50, 21, Math.round(100 * Math.max(0, b.hp) / b.max), 4); pxFont(g, 'BOSS', W / 2, 34, '#ffe0b0', 6, 'center'); }
+    else pxFont(g, b.done === 'win' ? 'BOSS VAINCU !' : 'LE BOSS S\'ENFUIT', W / 2, 40, b.done === 'win' ? '#ffd84a' : '#c8a088', 8, 'center');
+  }
+}
+// les pouvoirs des personnages, et leur niveau (l'expérience gagnée par chacun)
+const CV_POW = [['ruban', 'Rubans : points doublés'], ['vies', '9 vies : 9 ratés sans casser le combo'], ['boss', 'Boss : coups doublés']];
+CV_CHARS.forEach((c, i) => { c.pw = CV_POW[i][0]; c.pwTxt = CV_POW[i][1]; });
+const cvLevel = xp => { let L = 1, need = 400; xp = Math.max(0, xp | 0); while (xp >= need) { xp -= need; L++; need = Math.round(need * 1.2); } return L; };
+console.assert(cvLevel(0) === 1 && cvLevel(400) === 2 && cvLevel(879) === 2 && cvLevel(880) === 3, 'cvLevel');
+const cvXp = () => gstore('cavaleXp', {});
+// la musique de victoire, une par personnage (dans son propre contexte audio : celui du jeu se met en pause à la fin du morceau)
+const CV_JINGLE = [[[523, 0], [659, .12], [784, .24], [1047, .36], [784, .5], [1047, .62]], [[659, 0], [784, .1], [988, .2], [1319, .3], [1175, .48], [1319, .6]], [[392, 0], [392, .12], [523, .24], [659, .36], [523, .48], [784, .6]]];
+let cvJAc = null;
+function cvJingle(i) {
+  try { cvJAc ??= new AudioContext(); cvJAc.resume(); } catch { return; }
+  const t0 = cvJAc.currentTime + .2, vol = +($('rhVol')?.value ?? 70) / 100 * .2, wave = ['triangle', 'sine', 'square'][i] || 'triangle';
+  for (const [f, d] of CV_JINGLE[i] || CV_JINGLE[0]) { const o = cvJAc.createOscillator(), gn = cvJAc.createGain(), t = t0 + d; o.type = wave; o.frequency.value = f; gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(wave === 'square' ? vol * .5 : vol, t + .01); gn.gain.exponentialRampToValueAtTime(.001, t + .3); o.connect(gn).connect(cvJAc.destination); o.start(t); o.stop(t + .32); }
+}
+function cvOver() {  // fin du morceau : expérience du personnage, boss vaincus, musique de victoire
+  const c = cvChr(), X = cvXp(), L0 = cvLevel(X[c.name] || 0);
+  rh.xpGain = rh.counts.PARFAIT * 3 + rh.counts.BIEN * 2 + rh.counts.OK + (rh.bossWins || 0) * 100; X[c.name] = (X[c.name] || 0) + rh.xpGain; rh.lvl = cvLevel(X[c.name]); rh.lvlUp = rh.lvl > L0;
+  if (rh.bossWins) games.cavaleBoss = (games.cavaleBoss || 0) + rh.bossWins;
+  if ('SAB'.includes(rh.grade)) cvJingle(CV_CHARS.indexOf(c));
+}
 function cvPick(d) { const sel = $('cvChar'); sel.value = String((+sel.value + d + CV_CHARS.length) % CV_CHARS.length); gstore('rhythmPrefs', {}).cvChar = sel.value; saveGames(); }
-const cvTheme = () => (rh?.stars || 1) < 4 ? 0 : rh.stars < 7 ? 1 : 2;  // le chemin suit la difficulté du morceau : forêt (moins de 4★), neige (4 à 7★), ville (7★ et plus)
-const CV_THEMES = ['Forêt', 'Neige', 'Ville'];
+// le chemin suit la difficulté du morceau : forêt ou désert (moins de 4★), neige ou château (4 à 7★), ville ou bateau (7★ et plus), selon le morceau ;
+// l'option « Chemin » en choisit un pour tous les morceaux
+const cvTheme = () => { const v = $('cvPath')?.value; if (v) return +v; const b = (rh?.stars || 1) < 4 ? 0 : rh.stars < 7 ? 1 : 2; return b + ([...(rh?.info?.name || '')].reduce((a, c) => a + c.charCodeAt(0), 0) % 2) * 3; };
+const CV_THEMES = ['Forêt', 'Neige', 'Ville', 'Désert', 'Château', 'Bateau'];
 function cvScene(now, beat) {
   const bpm = rh.info?.bpm || 120, pxs = CV.PPB * bpm / 60, run = (rh.mode === 'play' ? Math.max(0, now) * pxs : 0) + rh.tick * .6, t = rh.tick, pulse = rh.mode === 'play' ? Math.max(0, 1 - (beat % 1) * 3) : 0;
-  [cvForest, cvSnow, cvCity][cvTheme()](run, t, pulse, beat);
+  [cvForest, cvSnow, cvCity, cvDesert, cvCastle, cvShip][cvTheme()](run, t, pulse, beat);
   if (rh.combo >= 20 && rh.mode === 'play') { g.globalAlpha = .25; for (let i = 0; i < 6; i++) px(g, '#fff0d0', ((i * 97 - t * 9) % W + W) % W, 30 + i * 27, 24, 1); g.globalAlpha = 1; }  // lignes de vitesse quand le combo monte
 }
 function cvPave(run, [m, c1, c2, hi, sh]) {  // les pavés, deux rangées décalées
@@ -1370,6 +1433,88 @@ function cvCity(run, t, pulse) {
   for (let i = 0; i < 40; i++) { const fx = ((i * 41 - t * 1.4 - run * .5) % (W + 30) + W + 30) % (W + 30) - 10, fy = (t * (5 + (i % 3)) + i * 67) % 250 - 10; px(g, '#a8c0ff', fx, fy, 1, 4); px(g, '#a8c0ff', fx - 1, fy + 4, 1, 2); }  // la pluie
   g.globalAlpha = 1;
 }
+/* ---------- 1.3.0 : trois nouveaux chemins — le désert, le château, le pont d'un bateau ---------- */
+// le désert (moins de 4★) : coucher de soleil rayé, pyramides, dunes, cactus, chemin de grès, virevoltants et sable qui vole
+const CV_SKY_DESERT = cnv(W, H, b => {
+  cvSkyGrad(b, ['#3a1a4a', '#6a2a5a', '#a8405a', '#d8604a', '#f08a4a', '#f8b05a', '#fcd080', '#fce8a8'], 150);
+  for (let y = -22; y <= 22; y++) for (let x = -22; x <= 22; x++) { const d = Math.hypot(x, y); if (d > 22 || (y > 4 && y % 4 < 1 + (y - 4) / 8)) continue; px(b, d > 20 ? '#ff9a4a' : y < -6 ? '#fff0a0' : '#ffd060', 232 + x, 112 + y); }
+});
+const CV_PYR = cnv(W, 50, b => { for (const [cx, h] of [[64, 40], [104, 24], [250, 32]]) for (let y = 0; y < h; y++) { px(b, '#a8603a', cx - y, 50 - h + y, y, 1); px(b, '#d89058', cx, 50 - h + y, y, 1); } });
+const CV_DUNE1 = cvBand(70, (b, x) => { const t = 70 - Math.round(22 + cvRidge(x, 2.2, 26, 1)); px(b, '#c87a4a', x, t, 1, 70 - t); px(b, '#e8a868', x, t, 1, 1); });
+const CV_DUNE2 = cvBand(60, (b, x) => { const t = 60 - Math.round(18 + cvRidge(x, 1.3, 22, 4)); px(b, '#e09a5a', x, t, 1, 60 - t); px(b, '#f8c888', x, t, 1, 1); for (let y = t + 3; y < 60; y += 5) if ((x + y) % 9 === 0) px(b, '#c88048', x, y, 2, 1); });
+const CV_CACTI = cnv(W, 50, b => { for (let k = 0; k < 5; k++) { const x = 20 + k * 64 + Math.floor(cvHash(k + 9) * 30), h = 24 + Math.floor(cvHash(k + 3) * 20), y = 50 - h;
+  px(b, '#1a3a1a', x - 1, y - 1, 8, h + 1); px(b, '#2a5a2a', x, y, 6, h); px(b, '#4a8a3a', x + 1, y, 2, h);
+  px(b, '#2a5a2a', x - 6, y + 10, 6, 4); px(b, '#2a5a2a', x - 6, y + 3, 4, 8); px(b, '#2a5a2a', x + 6, y + 14, 6, 4); px(b, '#2a5a2a', x + 8, y + 6, 4, 9); if (k % 2) px(b, '#ff6a8a', x + 2, y - 3, 2, 2); } });
+function cvDesert(run, t, pulse) {
+  g.drawImage(CV_SKY_DESERT, 0, 0);
+  cvWrap(CV_PYR, run * .03, 98); cvWrap(CV_DUNE1, run * .06, 108);
+  if (pulse > 0) { g.globalAlpha = pulse * .18; px(g, '#ffe0a0', 0, 150, W, 26); g.globalAlpha = 1; }
+  cvWrap(CV_DUNE2, run * .14, 132); cvWrap(CV_CACTI, run * .3, CV.FLOOR - 50);
+  px(g, '#5a2a14', 0, CV.FLOOR - 1, W, 1); px(g, '#f0c080', 0, CV.FLOOR, W, 3); px(g, '#c8905a', 0, CV.FLOOR + 3, W, H - CV.FLOOR - 3);
+  cvPave(run, ['#7a4a24', '#d8a060', '#c89050', '#f0c888', '#9a6a3a']);
+  for (let i = 0; i < 2; i++) {  // les virevoltants qui roulent en rebondissant
+    const x = W + 30 - ((t * 1.6 + i * 260 + run * .9) % (W + 80)), y = CV.FLOOR - 6 - Math.abs(Math.sin((t + i * 40) / 9)) * 8, a = t / 6;
+    for (let k = 0; k < 14; k++) { const r = 2 + (k % 3) * 2, c = a + k * 1.3; px(g, k % 2 ? '#8a5a2a' : '#c8945a', Math.round(x + Math.cos(c) * r), Math.round(y + Math.sin(c) * r), 1, 1); } }
+  g.globalAlpha = .5; for (let i = 0; i < 26; i++) { const fx = ((i * 61 - t * (3 + i % 3) - run * .6) % (W + 20) + W + 20) % (W + 20) - 10, fy = 140 + (i * 37) % 70; px(g, '#fce0a8', fx, fy, 3, 1); } g.globalAlpha = 1;  // le sable qui vole
+}
+// le château (4 à 7★) : nuit bleue, pleine lune, donjon aux fenêtres allumées, rempart et ses torches, bannières, chauves-souris, dalles grises
+const CV_SKY_CASTLE = cnv(W, H, b => {
+  cvSkyGrad(b, ['#05040e', '#0a0a1e', '#12142e', '#1a1e3e', '#22284a', '#2c3456', '#384260', '#465068'], 150);
+  for (let y = -14; y <= 14; y++) for (let x = -14; x <= 14; x++) { const d = Math.hypot(x, y); if (d > 14) continue; px(b, d > 12.6 ? '#c8c4b0' : [[-4, -3, 3], [5, 4, 3]].some(([a, c, r]) => Math.hypot(x - a, y - c) < r) ? '#d8d4c0' : '#f0ecd8', 250 + x, 40 + y); }
+});
+const CV_KEEP = cnv(W, 120, b => {
+  const wall = '#1a1830', edge = '#2a2848'; px(b, wall, 0, 74, W, 46); for (let x = 0; x < W; x += 8) px(b, wall, x, 70, 5, 4);
+  for (const [x, w, h, cone] of [[24, 20, 96, 1], [100, 34, 114, 0], [190, 18, 86, 1], [262, 26, 100, 0]]) {
+    px(b, wall, x, 120 - h, w, h); px(b, edge, x, 120 - h, 1, h);
+    if (cone) for (let r = 0; r < 16; r++) { const hw = Math.round((r + 1) * (w / 2 + 2) / 16); px(b, '#2a1a40', x + w / 2 - hw, 120 - h - 16 + r, hw * 2, 1); }
+    else for (let k = 0; k < w; k += 6) px(b, wall, x + k, 120 - h - 4, 4, 4);
+    for (let wy = 120 - h + 10; wy < 108; wy += 14) px(b, cvHash(x * 3 + wy) > .45 ? '#ffc860' : '#2a2440', x + Math.floor(w / 2) - 1, wy, 3, 5);
+  }
+});
+const CV_RAMPART = cnv(W, 64, b => {  // le rempart tout près : des pierres, des créneaux en haut
+  for (let y = 8; y < 64; y += 6) for (let x = -((y / 6) % 2) * 8; x < W; x += 16) { px(b, '#22223a', x, y, 16, 6); px(b, '#3a3a56', x + 1, y + 1, 14, 4); px(b, '#4a4a68', x + 1, y + 1, 14, 1); }
+  for (let x = 0; x < W; x += 16) { px(b, '#22223a', x, 0, 9, 9); px(b, '#3a3a56', x + 1, 1, 7, 7); px(b, '#4a4a68', x + 1, 1, 7, 1); }
+});
+function cvCastle(run, t, pulse) {
+  g.drawImage(CV_SKY_CASTLE, 0, 0);
+  for (const [x, y, ph] of CV_STARS) { const tw = (t + ph * 7) % 90; if (y < 60) px(g, tw < 6 ? '#ffffff' : tw < 40 ? '#c8c8e8' : '#4a4a78', x, y); }
+  cvWrap(CV_KEEP, run * .05, 50);
+  if (pulse > 0) { g.globalAlpha = pulse * .16; px(g, '#a88aff', 0, 150, W, 26); g.globalAlpha = 1; }
+  for (let i = 0; i < 3; i++) { const bx = W + 20 - ((t * (1.2 + i * .3) + i * 140) % (W + 60)), by = 60 + i * 18 + Math.sin(t / 10 + i) * 6, f = (t >> 2) % 2;  // les chauves-souris
+    px(g, '#0a0814', bx - 1, by, 3, 2); px(g, '#0a0814', bx - 4, by - f, 3, 1); px(g, '#0a0814', bx + 2, by - f, 3, 1); px(g, '#0a0814', bx - 5, by + 1 - 2 * f, 1, 1); px(g, '#0a0814', bx + 5, by + 1 - 2 * f, 1, 1); }
+  cvWrap(CV_RAMPART, run * .25, CV.FLOOR - 64);
+  for (let k = Math.floor(run * .25 / 80) - 1; ; k++) { const x = Math.round(k * 80 + 40 - run * .25); if (x > W + 10) break;  // les torches et les bannières du rempart
+    if (k % 2) { const c = k % 4 === 1 ? '#a82a3a' : '#2a4aa8'; px(g, '#0a0814', x - 7, CV.FLOOR - 56, 14, 2); px(g, c, x - 6, CV.FLOOR - 54, 12, 22); px(g, '#ffd84a', x - 2, CV.FLOOR - 48, 4, 4); for (let j = 0; j < 6; j++) px(g, c, x - 6 + j * 2, CV.FLOOR - 32, 1, 2 + (j % 2) * 2); continue; }
+    const fl = (t >> 2) % 3; g.globalAlpha = .12 + pulse * .2; for (let r = 12; r > 3; r -= 3) px(g, '#ffa83a', x - r, CV.FLOOR - 44 - r, r * 2, r * 2); g.globalAlpha = 1;
+    px(g, '#3a2414', x - 1, CV.FLOOR - 40, 3, 10); px(g, '#e8501a', x - 2, CV.FLOOR - 46 - fl, 5, 6 + fl); px(g, '#ffd84a', x - 1, CV.FLOOR - 44, 3, 3); }
+  px(g, '#0a0814', 0, CV.FLOOR - 1, W, 1); px(g, '#8a8a98', 0, CV.FLOOR, W, 1); px(g, '#4a4a58', 0, CV.FLOOR + 1, W, 2); px(g, '#2a2a34', 0, CV.FLOOR + 3, W, H - CV.FLOOR - 3);
+  cvPave(run, ['#1a1a24', '#6a6a78', '#5e5e6c', '#8a8a98', '#3e3e4a']);
+}
+// le bateau (7★ et plus) : ciel d'été, îles au loin, la mer qui brille sur le temps, les mâts et leurs voiles, le bastingage, le pont de bois, les mouettes
+const CV_SKY_SEA = cnv(W, H, b => {
+  cvSkyGrad(b, ['#2a6ab0', '#3a7ac0', '#4a8ad0', '#5a9ad8', '#70aee0', '#88c0e8', '#a8d4f0', '#c8e4f8'], 130);
+  for (let y = -10; y <= 10; y++) for (let x = -10; x <= 10; x++) { const d = Math.hypot(x, y); if (d <= 10) px(b, d > 8 ? '#fff0a0' : '#fffce8', 62 + x, 36 + y); }
+});
+const CV_ISLE = cnv(W, 34, b => { for (const [cx, w] of [[70, 64], [236, 40]]) { for (let x = -w / 2; x < w / 2; x++) { const h = Math.round(Math.sqrt(1 - (2 * x / w) ** 2) * 16); px(b, '#3a7a5a', cx + x, 34 - h, 1, h); px(b, '#5aa070', cx + x, 34 - h, 1, 1); }
+  px(b, '#6a4a2a', cx + 2, 6, 2, 14); for (let k = 0; k < 5; k++) px(b, '#2a8a4a', cx + 3 - 6 + k * 3, 5 + Math.abs(k - 2), 4, 2); } });
+function cvShip(run, t, pulse, beat) {
+  g.drawImage(CV_SKY_SEA, 0, 0);
+  CV_CLOUDS.forEach((c, v) => { for (let k = -1; k < 4; k++) { const x = Math.round(((k * 160 + v * 80 - (run * (.03 + v * .02) + t * (.04 + v * .03))) % 640 + 640) % 640 - 80); g.drawImage(c, x, 14 + v * 20 + (k % 2) * 6); } });
+  cvWrap(CV_ISLE, run * .03, 98);
+  for (let y = 130; y < CV.FLOOR - 14; y++) px(g, y < 140 ? '#2a7ac0' : y < 156 ? '#1e64a8' : '#164e8a', 0, y, W, 1);  // la mer, plus sombre de près
+  for (let y = 132; y < CV.FLOOR - 16; y += 4) { const sp = .2 + (y - 130) / 60; for (let x = 0; x < W + 16; x += 16) {  // les vagues qui défilent, plus vives sur le temps fort
+    const wx = ((x - run * sp + Math.sin(y + t / 20) * 3 + (y % 8) * 5) % (W + 16) + W + 16) % (W + 16) - 8; px(g, pulse > .4 && (x + y) % 3 === 0 ? '#ffffff' : '#7ac0f0', wx, y, 5, 1); } }
+  for (let i = 0; i < 2; i++) { const bx = ((t * .6 + i * 170) % (W + 40)) - 20, by = 50 + i * 16 + Math.sin(t / 15 + i) * 3; g.drawImage(CV_BIRD[((t >> 3) + i) % 2], Math.round(W - bx), Math.round(by)); }  // les mouettes
+  px(g, '#3a1e0e', 0, CV.FLOOR - 15, W, 2); px(g, '#8a5a30', 0, CV.FLOOR - 14, W, 1);  // le bastingage
+  for (let k = Math.floor(run / 12) - 1; ; k++) { const x = Math.round(k * 12 - run); if (x > W) break; px(g, '#5a3a1e', x, CV.FLOOR - 13, 2, 12); }
+  for (let k = Math.floor(run / 200) - 1; ; k++) { const x = Math.round(k * 200 + 120 - run); if (x > W + 50) break;  // un mât, sa voile gonflée, ses cordages
+    px(g, '#2a160a', x - 2, 4, 5, CV.FLOOR - 4); px(g, '#6a4220', x - 1, 4, 3, CV.FLOOR - 4); px(g, '#4a2a14', x - 30, 20, 62, 3);
+    for (let y = 23; y < 96; y++) { const bulge = Math.round(Math.sin((y - 23) / 73 * Math.PI) * 6); px(g, '#e8e0c8', x - 28 + bulge, y, 56, 1); px(g, '#c8c0a8', x - 28 + bulge, y, 3, 1); if ((y - 23) % 18 === 0) px(g, '#c8c0a8', x - 28 + bulge, y, 56, 1); }
+    px(g, '#a82a3a', x - 1, -2, 10, 6);  // le fanion
+    for (let j = 0; j < 40; j++) { px(g, '#3a2a1a', x - 30 + j * .7, 22 + j * 4.2, 1, 1); px(g, '#3a2a1a', x + 31 - j * .7, 22 + j * 4.2, 1, 1); } }
+  px(g, '#2a160a', 0, CV.FLOOR - 1, W, 1); px(g, '#b8844a', 0, CV.FLOOR, W, 1); px(g, '#8a5a30', 0, CV.FLOOR + 1, W, H - CV.FLOOR - 1);
+  for (let y = CV.FLOOR + 4; y < H; y += 6) { px(g, '#5a3a1e', 0, y, W, 1); for (let k = Math.floor(run / 48) - 1; ; k++) { const x = Math.round(k * 48 + (y % 12) * 2 - run); if (x > W) break; px(g, '#5a3a1e', x, y - 5, 1, 5); px(g, '#3a2414', x + 20, y - 3, 1, 1); } }  // les planches du pont
+}
 function cvHero(beat) {
   const t = rh.tick, sw = rh.swing && t - rh.swing.at < 10 ? rh.swing : null, hurt = t - rh.hurt < 16;
   const C = cvChr(), F = C.f, air = t - rh.jumpAt < 16 || rh.held.air > 0, x = CV.HX - 18;
@@ -1388,7 +1533,9 @@ function cvHero(beat) {
   if (sw && t - sw.at >= 2) {  // le coup d'épée : un croissant de lumière sur la voie frappée
     const sy = cvY(sw.kind), p = (t - sw.at - 2) / 8, cx = CV.HX + 6;
     g.globalAlpha = 1 - p;
-    for (let a = -1.3; a <= 1.3; a += .05) { const r1 = 13 + p * 7, th = Math.round((1.4 - Math.abs(a)) * 3); for (let k = 0; k < th; k++) px(g, k === 0 ? '#ffffff' : '#ffd88a', cx + Math.cos(a) * (r1 - k), sy + Math.sin(a) * (r1 - k), 1, 1); }
+    const big = sw.q === 'PARFAIT', small = sw.q === 'OK';
+    for (let a = -1.3; a <= 1.3; a += .05) { const r1 = 13 + p * 7 + (big ? 4 : small ? -3 : 0), th = Math.round((1.4 - Math.abs(a)) * (big ? 4 : small ? 1.5 : 3)); for (let k = 0; k < th; k++) px(g, k === 0 ? '#ffffff' : big ? '#ffd84a' : small ? '#c8d8ff' : '#ffd88a', cx + Math.cos(a) * (r1 - k), sy + Math.sin(a) * (r1 - k), 1, 1); }
+    if (big) for (const [dx, dy] of [[22, -12], [26, 4], [18, 14]]) { const s = (t - sw.at) % 4 < 2 ? 1 : 2; px(g, '#ffffff', cx + dx - s, sy + dy, s * 2 + 1, 1); px(g, '#ffffff', cx + dx, sy + dy - s, 1, s * 2 + 1); }
     g.globalAlpha = 1;
   }
 }
@@ -1419,6 +1566,7 @@ function cvLanes(now, beat) {
     const n = rh.notes[i]; if (n.judged && !n.missed) continue; if (n.end && n.missed) continue;
     const x = Math.round(CV.HX + 14 + (n.t - now) * pxs); if (x > W + 16 || x < -20) continue;
     const ago = now - n.t; if (n.missed && ago > .6) continue;
+    if (rh.hid && !n.missed) { const dx = x - CV.HX - 14; if (dx < 50) { if (dx < 26) continue; g.globalAlpha = (dx - 26) / 24; } }  // notes cachées : le monstre disparaît avant d'arriver
     if (n.missed) g.globalAlpha = Math.max(0, 1 - ago / .6);
     px(g, 'rgba(26,14,10,.35)', x - 6, CV.FLOOR - 1, 12, 2);
     const s = cvMob(n.kind, i);
@@ -1426,6 +1574,7 @@ function cvLanes(now, beat) {
     else { const sq = Math.floor(rh.tick / 10 + i) % 2; g.drawImage(s, 0, 0, 16, 12, x - 8 - sq, CV.FLOOR - 12 + sq, 16 + sq * 2, 12 - sq); }  // la gelée s'écrase et rebondit
     g.globalAlpha = 1;
   }
+  for (const f of rh.fx) if (f.k === 'laugh') pxFont(g, f.t % 10 < 5 ? 'HI HI !' : 'HA HA !', CV.HX + 44, f.y - 18 - Math.round(f.t / 4), '#ffffff', 6, 'center');
   for (const f of rh.fx) if (f.k === 'fly') {  // un monstre frappé s'envole en tournant, après un éclat en étoile
     const p = f.t / 30, x = CV.HX + 18 + p * 160, y = f.y - Math.sin(p * Math.PI) * 50 - p * 40;
     if (f.t < 6) { const r = 4 + f.t * 3, c = f.t < 3 ? '#ffffff' : '#ffd84a'; px(g, c, CV.HX + 14 - r, f.y, r * 2, 1); px(g, c, CV.HX + 14, f.y - r, 1, r * 2); for (let d = 0; d < r * .7; d++) { px(g, c, CV.HX + 14 + d, f.y + d); px(g, c, CV.HX + 14 - d, f.y + d); px(g, c, CV.HX + 14 + d, f.y - d); px(g, c, CV.HX + 14 - d, f.y - d); } }
@@ -1436,7 +1585,7 @@ function cvLanes(now, beat) {
 }
 function cvDraw() {
   const now = rhNow(), bpm = rh.info?.bpm || 120, beat = rh.mode === 'play' ? Math.max(0, now) * bpm / 60 : rh.tick / 40;
-  cvScene(now, beat); cvLanes(now, beat); cvHero(beat);
+  rh.hid = cvVal('cvHid', '0') === '1'; cvScene(now, beat); cvBoss(now, beat); cvLanes(now, beat); cvHero(beat);
   if (rh.mode !== 'ready' && rh.mode !== 'load') {
     rhProgress(now, '#ffb84a'); pxFont(g, String(rh.score).padStart(7, '0'), 4, 14, '#ffffff', 7);
     if (rh.combo > 4) pxFont(g, rh.combo + ' combo', W - 4, 14, '#ffd84a', 7, 'right');
@@ -1444,9 +1593,9 @@ function cvDraw() {
   }
   if (rh.mode === 'play' && now < 0) pxFont(g, String(Math.ceil(-now)), W / 2, 70, '#ffd84a', 16, 'center');
   rhScreens(60);
-  if (rh.mode === 'over' && rh.tick - rh.overAt > 20) cvCurveDraw();
+  if (rh.mode === 'over' && rh.tick - rh.overAt > 20) { cvCurveDraw(); if (rh.xpGain) pxFont(g, '+' + rh.xpGain + ' XP · ' + cvChr().name + ' niv ' + rh.lvl + (rh.lvlUp ? ' !' : ''), W / 2, 234, rh.lvlUp ? '#ffd84a' : '#c8f0a0', 6, 'center'); }
   if (rh.mode === 'ready') {  // le personnage (◀ ▶ pour changer) et le chemin de ce morceau
-    const nm = cvChr().name; pxFont(g, nm, W / 2, 216, '#ffffff', 7, 'center'); pxFont(g, '◀', W / 2 - 46, 216, '#ffd84a', 7, 'center'); pxFont(g, '▶', W / 2 + 46, 216, '#ffd84a', 7, 'center');
+    const C = cvChr(), nm = C.name + ' · niv ' + cvLevel(cvXp()[C.name] || 0); pxFont(g, C.pwTxt, W / 2, 202, '#ffe0b0', 6, 'center'); pxFont(g, nm, W / 2, 216, '#ffffff', 7, 'center'); pxFont(g, '◀', W / 2 - 46, 216, '#ffd84a', 7, 'center'); pxFont(g, '▶', W / 2 + 46, 216, '#ffd84a', 7, 'center');
     pxFont(g, CV_THEMES[cvTheme()], W / 2, 230, '#c8b8e8', 6, 'center');
   }
   if (rh.tick % 15 === 0) cv.setAttribute('aria-label', 'Cavale, ' + (rh.info?.name || '') + ' : ' + ({ready: 'prêt', load: 'chargement', play: 'en jeu', pause: 'pause', over: 'fini'}[rh.mode] || rh.mode) + ', score ' + rh.score + ', combo ' + rh.combo + ', ' +
@@ -1521,7 +1670,7 @@ function cvCheck() {  // vérification : chaque difficulté donne des monstres e
   return bad.length ? bad.join(', ') : 'ok';
 }
 console.assert(cvCheck() === 'ok', 'cavale', cvCheck());
-cv.__cv = {st: () => rh, hit: cvHit, up: cvUp, theme: cvTheme, chr: () => cvChr().name, pick: cvPick, curve: cvCurve, check: cvCheck};
+cv.__cv = {jingle: cvJingle, boss: cvBossHit, st: () => rh, hit: cvHit, up: cvUp, theme: cvTheme, chr: () => cvChr().name, pick: cvPick, curve: cvCurve, check: cvCheck};
 ctx.onOpen(() => rhOpen());
 }
 

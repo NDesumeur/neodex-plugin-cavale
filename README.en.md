@@ -36,6 +36,14 @@ The **Songs** tab has the 1200 Rythme tracks, in four difficulties (Easy, Normal
 
 In **My music**, create a level from an imported **audio file** or a track from your **NeoMusic** library: the game finds its tempo and strong beats and turns them into a level, at the chosen **difficulty** (1 to 10 stars).
 
+## Bosses, powers and levels
+
+- **Bosses**: on the 8 busiest bars near the end of the song (and, for songs over 90 s, on those near the start), a crowned boss arrives from the right. Each monster you hit hurts it; empty its health bar before the passage ends to defeat it (2000 bonus points), otherwise it runs away. The boss changes with the path: giant slime, ghost or bat.
+- **Powers**: the **Runner** gets double points on ribbons, the **Cat** has 9 lives (9 misses that don't break the combo), the **Robot** hits bosses twice as hard.
+- **Levels**: each character earns experience every song (more for a defeated boss); its level is shown under its name.
+- The sword slash changes with the judgement (big and golden on a PERFECT), monsters mock you when you miss one, and each character has its own victory tune.
+- **Hidden notes** (setting): monsters vanish before arriving.
+
 ## Settings
 
 - Music **volume**.
@@ -51,3 +59,7 @@ Your scores and grades per level and your settings are stored by NeoDex, backed 
 In NeoDex: **NeoStore → Discover → Gallop → Install**.
 
 Building a plugin: see the [NeoDex SDK](https://github.com/NDesumeur/neodex-sdk).
+
+## Six paths
+
+Besides the forest, the snow and the city, three new paths: the desert at sunset (pyramids, cacti, tumbleweeds), the castle at night (rampart, torches, banners, bats) and a ship's deck (sails, a sea that sparkles on the beat, seagulls). Each difficulty band has two possible paths, picked by the song; the “Path” option forces one for every song.

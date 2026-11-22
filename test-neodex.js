@@ -36,9 +36,12 @@ module.exports = async ({ pj, sleep }) => {
   // les chemins : neige (4 à 7★) avec le robot, ville (7★ et plus) avec la coureuse
   const st0 = await C('return rh.stars;');
   await pj(`(document.getElementById('cvChar').value = '2', 0)`); await C('rh.stars = 5; return 0;'); await sleep(400);
-  if (await C('return T.theme();') !== 1) throw new Error('5★ devait donner la neige'); await shot('2-neige-robot');
+  if (await C('return T.theme() % 3;') !== 1) throw new Error('5★ devait donner la neige'); await shot('2-neige-robot');
   await pj(`(document.getElementById('cvChar').value = '0', 0)`); await C('rh.stars = 8.5; return 0;'); await sleep(400);
-  if (await C('return T.theme();') !== 2) throw new Error('8,5★ devait donner la ville'); await shot('3-ville-coureuse');
+  if (await C('return T.theme() % 3;') !== 2) throw new Error('8,5★ devait donner la ville'); await shot('3-ville-coureuse');
+  // les nouveaux chemins, choisis dans l'option « Chemin »
+  for (const [v, nm] of [[3, 'desert'], [4, 'chateau'], [5, 'bateau']]) { await pj(`(document.getElementById('cvPath').value = '${v}', 0)`); await sleep(400); if (await C('return T.theme();') !== v) throw new Error('chemin ' + nm); await shot('4-' + nm); }
+  await pj(`(document.getElementById('cvPath').value = '', 0)`);
   await C(`rh.stars = ${st0}; return 0;`);
   await pj(`(__pad.buttons[9].pressed = true, 0)`); await sleep(120); await pj(`(__pad.buttons[9].pressed = false, 0)`); await sleep(100);
   if (!/: pause,/.test(await label()) && await C('return rh.mode;') !== 'pause') throw new Error('Start devait mettre en pause');
@@ -49,6 +52,9 @@ module.exports = async ({ pj, sleep }) => {
   await sleep(300); await shot('4-fin-courbe');
   const cu = await C('return T.curve(rh.notes).filter(v => v != null);');
   if (!(cu.length > 20 && cu[0] > .6 && cu.some(v => v === 0) && cu.at(-1) === 1)) throw new Error('courbe de précision : ' + JSON.stringify(cu));
+  // 1.3.0 : le boss du morceau, vaincu à coups réussis ; la musique de victoire se joue sans erreur
+  const bo = await C('const b = rh.bosses?.at(-1); if (!b) return "aucun boss"; b.done = ""; for (let i = 0; i < 80 && !b.done; i++) T.boss(b.t0 + .01); T.jingle(1); return b.done + "," + (rh.bossWins > 0);');
+  if (bo !== 'win,true') throw new Error('boss : ' + bo);
   // plein écran, et la zone de jeu qui tient dans la fenêtre
   await pj(`document.fullscreenElement && document.exitFullscreen(), 0`); await sleep(400);  // la partie s'était mise en plein écran
   await pj(`document.getElementById('rhFs').click(), 0`); await sleep(700);
@@ -58,5 +64,5 @@ module.exports = async ({ pj, sleep }) => {
   const L = await pj(`(() => { const r = document.getElementById('gc').getBoundingClientRect(); let s = 0; for (let e = document.getElementById('gc').parentElement; e; e = e.parentElement) s += e.scrollTop; return { bottom: Math.round(r.bottom + s), h: Math.round(r.height), wh: innerHeight, ww: innerWidth, sw: document.documentElement.scrollWidth }; })()`);
   if (process.env.NEO_FIT_LOG) console.log('FIT', JSON.stringify(L));
   if (L.bottom > L.wh + 1 || L.sw > L.ww + 1 || L.h < 240) throw new Error('la zone de jeu dépasse la fenêtre ou reste petite : ' + JSON.stringify(L));
-  return 'vérification ok · personnages ' + names.join(', ') + ' · ' + judged(l) + ' notes jugées · manette · neige et ville · pause · courbe de fin · plein écran · ' + L.h + ' px dans ' + L.ww + '×' + L.wh;
+  return 'boss vaincu · vérification ok · personnages ' + names.join(', ') + ' · ' + judged(l) + ' notes jugées · manette · neige et ville · désert, château, bateau · pause · courbe de fin · plein écran · ' + L.h + ' px dans ' + L.ww + '×' + L.wh;
 };
